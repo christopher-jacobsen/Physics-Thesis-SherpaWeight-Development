@@ -1,0 +1,8 @@
+### Mac OS and XCode ignore files and folders ###
+
+# MAC OS folders
+.DS_Store
+
+# XCode project folders
+xcuserdata/
+project.xcworkspace/

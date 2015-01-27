@@ -1,0 +1,41 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//  SMEX.h
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef SMEX_H
+#define SMEX_H
+
+#include "common.h"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// forward declarations
+struct SherpaEvent;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SMEX
+{
+public:
+    struct RunParameters
+    {
+        std::string     inputRootFileName;
+        std::string     outputRootFileName;
+    };
+
+public:
+    SMEX();
+    ~SMEX() throw();
+    
+    int ParseCommandLine( int argc, const char * argv[], RunParameters & param );
+    
+    int Run( const RunParameters & param );
+    
+private:
+    void ProcessEvent( SherpaEvent & event );
+
+private:
+    SMEX(const SMEX &) = delete;
+    SMEX & operator=(const SMEX &) = delete;
+};
+
+#endif // SMEX_H
