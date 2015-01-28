@@ -5,6 +5,7 @@
 #include "SMEX.h"
 
 #include "SherpaEvent.h"
+#include "SherpaMECalculator.h"
 
 #include "common.h"
 
@@ -18,8 +19,6 @@
 #include <ATOOLS/Org/Exception.H>
 #include <ATOOLS/Phys/Cluster_Amplitude.H>
 #include <ATOOLS/Math/Vector.H>
-
-#include <AddOns/Python/MEProcess.H>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SMEX
@@ -236,13 +235,13 @@ void SMEX::ProcessEvent( SherpaEvent & event )
     }
 
     // create a MEProcess instance
-    MEProcess meProcess( m_upSherpa.get() );
+    SherpaMECalculator meCalc( m_upSherpa.get() );
 
     // define the flavors and momenta
     ATOOLS::Vec4D_Vector momenta;
     {
-        meProcess.AddInFlav( event.id1 );
-        meProcess.AddInFlav( event.id2 );
+        meCalc.AddInFlav( event.id1 );
+        meCalc.AddInFlav( event.id2 );
         
         momenta.push_back( P_in1 );
         momenta.push_back( P_in2 );
@@ -250,7 +249,7 @@ void SMEX::ProcessEvent( SherpaEvent & event )
         for (Int_t i = 0; i < event.nparticle; ++i)
         {
             Int_t code = event.kf[i];
-            meProcess.AddOutFlav( code );
+            meCalc.AddOutFlav( code );
             
             ATOOLS::Vec4D P_part( event.E[i], event.px[i], event.py[i], event.pz[i] );
             momenta.push_back( P_part );
@@ -259,16 +258,16 @@ void SMEX::ProcessEvent( SherpaEvent & event )
 
     try
     {
-        meProcess.Initialize();
+        meCalc.Initialize();
     }
     catch (const ATOOLS::Exception & error)
     {
         LogMsgError( "Sherpa exception caught: \"%hs\" in %hs::%hs",
             FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
         
-        LogMsgInfo( "Sherpa process name: \"%hs\"", FMT_HS(meProcess.Name().c_str()) );
+        LogMsgInfo( "Sherpa process name: \"%hs\"", FMT_HS(meCalc.Name().c_str()) );
         
-        const ATOOLS::Cluster_Amplitude * pAmp = meProcess.GetAmp();
+        const ATOOLS::Cluster_Amplitude * pAmp = meCalc.GetAmp();
         if (!pAmp)
             LogMsgInfo("Sherpa process cluster amplitude: null");
         else
@@ -280,5 +279,5 @@ void SMEX::ProcessEvent( SherpaEvent & event )
         throw;
     }
     
-    meProcess.SetMomenta( momenta );
+    meCalc.SetMomenta( momenta );
 }

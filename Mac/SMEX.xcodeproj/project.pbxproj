@@ -10,6 +10,7 @@
 		230EC6E41A77A16800DC49D3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E11A77A16800DC49D3 /* main.cpp */; };
 		230EC6E51A77A16800DC49D3 /* SMEX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SMEX.cpp */; };
 		230EC6E81A77C23400DC49D3 /* SherpaEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */; };
+		232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232B88701A78C448009534D6 /* SherpaMECalculator.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +38,8 @@
 		232B886D1A782C32009534D6 /* MEProcess.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = "<group>"; };
 		232B886E1A784AEB009534D6 /* test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = test.cpp; path = "../../../Sherpa/SHERPA-MC-2.1.1/Examples/API/ME2-CPP/test.cpp"; sourceTree = "<group>"; };
 		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../Sherpa/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = "<group>"; };
+		232B88701A78C448009534D6 /* SherpaMECalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMECalculator.cpp; path = ../SherpaMECalculator.cpp; sourceTree = "<group>"; };
+		232B88711A78C448009534D6 /* SherpaMECalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMECalculator.h; path = ../SherpaMECalculator.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +79,8 @@
 				230EC6E21A77A16800DC49D3 /* SMEX.cpp */,
 				230EC6E61A77BE6600DC49D3 /* SherpaEvent.h */,
 				230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */,
+				232B88701A78C448009534D6 /* SherpaMECalculator.cpp */,
+				232B88711A78C448009534D6 /* SherpaMECalculator.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -145,6 +150,7 @@
 			files = (
 				230EC6E51A77A16800DC49D3 /* SMEX.cpp in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
+				232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */,
 				230EC6E81A77C23400DC49D3 /* SherpaEvent.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -219,7 +225,10 @@
 					"-lMathCore",
 					"-lThread",
 					"-lSherpaMain",
-					"-lMEProcess",
+					"-lToolsOrg",
+					"-lToolsPhys",
+					"-lPhasicMain",
+					"-lPhasicProcess",
 				);
 				SDKROOT = macosx;
 			};
@@ -286,7 +295,10 @@
 					"-lMathCore",
 					"-lThread",
 					"-lSherpaMain",
-					"-lMEProcess",
+					"-lToolsOrg",
+					"-lToolsPhys",
+					"-lPhasicMain",
+					"-lPhasicProcess",
 				);
 				SDKROOT = macosx;
 			};
