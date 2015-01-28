@@ -11,6 +11,11 @@
 // forward declarations
 struct SherpaEvent;
 
+namespace SHERPA
+{
+class Sherpa;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SMEX
@@ -20,6 +25,8 @@ public:
     {
         std::string     inputRootFileName;
         std::string     outputRootFileName;
+
+        std::vector<const char *> argv;
     };
 
 public:
@@ -32,6 +39,9 @@ public:
     
 private:
     void ProcessEvent( SherpaEvent & event );
+    
+private:
+    std::unique_ptr<SHERPA::Sherpa> m_upSherpa;
 
 private:
     SMEX(const SMEX &) = delete;

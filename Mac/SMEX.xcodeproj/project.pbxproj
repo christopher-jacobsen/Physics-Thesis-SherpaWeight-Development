@@ -32,6 +32,11 @@
 		230EC6E31A77A16800DC49D3 /* SMEX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SMEX.h; path = ../SMEX.h; sourceTree = "<group>"; };
 		230EC6E61A77BE6600DC49D3 /* SherpaEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SherpaEvent.h; path = ../SherpaEvent.h; sourceTree = "<group>"; };
 		230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaEvent.cpp; path = ../SherpaEvent.cpp; sourceTree = "<group>"; };
+		232B886B1A782C32009534D6 /* MEProcess.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = "<group>"; };
+		232B886C1A782C32009534D6 /* MEProcess.H */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = MEProcess.H; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.H"; sourceTree = "<group>"; };
+		232B886D1A782C32009534D6 /* MEProcess.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = "<group>"; };
+		232B886E1A784AEB009534D6 /* test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = test.cpp; path = "../../../Sherpa/SHERPA-MC-2.1.1/Examples/API/ME2-CPP/test.cpp"; sourceTree = "<group>"; };
+		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../Sherpa/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +54,7 @@
 			isa = PBXGroup;
 			children = (
 				230EC6DF1A77A15A00DC49D3 /* Source */,
+				232B886A1A782BF9009534D6 /* Other Files */,
 				230EC6D41A77A10F00DC49D3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -72,6 +78,18 @@
 				230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */,
 			);
 			name = Source;
+			sourceTree = "<group>";
+		};
+		232B886A1A782BF9009534D6 /* Other Files */ = {
+			isa = PBXGroup;
+			children = (
+				232B886F1A784EBF009534D6 /* test.py.in */,
+				232B886E1A784AEB009534D6 /* test.cpp */,
+				232B886B1A782C32009534D6 /* MEProcess.C */,
+				232B886C1A782C32009534D6 /* MEProcess.H */,
+				232B886D1A782C32009534D6 /* MEProcess.i */,
+			);
+			name = "Other Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -169,9 +187,13 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/usr/local/opt/root/include/root,
+					/usr/local/include/root,
+					"/usr/local/include/SHERPA-MC",
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/opt/root/lib/root;
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib/root,
+					"/usr/local/lib/SHERPA-MC",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -196,6 +218,8 @@
 					"-lPhysics",
 					"-lMathCore",
 					"-lThread",
+					"-lSherpaMain",
+					"-lMEProcess",
 				);
 				SDKROOT = macosx;
 			};
@@ -231,9 +255,13 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/usr/local/opt/root/include/root,
+					/usr/local/include/root,
+					"/usr/local/include/SHERPA-MC",
 				);
-				LIBRARY_SEARCH_PATHS = /usr/local/opt/root/lib/root;
+				LIBRARY_SEARCH_PATHS = (
+					/usr/local/lib/root,
+					"/usr/local/lib/SHERPA-MC",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_CPLUSPLUSFLAGS = (
 					"$(OTHER_CFLAGS)",
@@ -257,6 +285,8 @@
 					"-lPhysics",
 					"-lMathCore",
 					"-lThread",
+					"-lSherpaMain",
+					"-lMEProcess",
 				);
 				SDKROOT = macosx;
 			};
