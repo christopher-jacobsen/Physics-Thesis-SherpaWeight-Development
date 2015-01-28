@@ -4,21 +4,21 @@
 
 #include "SherpaMECalculator.h"
 
-#include "SHERPA/PerturbativePhysics/Matrix_Element_Handler.H"
-#include "SHERPA/Main/Sherpa.H"
-#include "SHERPA/Initialization/Initialization_Handler.H"
+#include <SHERPA/Main/Sherpa.H>
+#include <SHERPA/PerturbativePhysics/Matrix_Element_Handler.H>
+#include <SHERPA/Initialization/Initialization_Handler.H>
 
-#include "ATOOLS/Math/MathTools.H"
-#include "ATOOLS/Phys/Cluster_Amplitude.H"
-#include "ATOOLS/Org/Data_Reader.H"
-#include "ATOOLS/Org/MyStrStream.H"
-#include "ATOOLS/Org/Run_Parameter.H"
+#include <ATOOLS/Math/MathTools.H>
+#include <ATOOLS/Phys/Cluster_Amplitude.H>
+#include <ATOOLS/Org/Data_Reader.H>
+#include <ATOOLS/Org/MyStrStream.H>
+#include <ATOOLS/Org/Run_Parameter.H>
 
-#include "PHASIC++/Process/ME_Generator_Base.H"
-#include "PHASIC++/Process/Process_Base.H"
-#include "PHASIC++/Process/Process_Info.H"
-#include "PHASIC++/Process/Subprocess_Info.H"
-#include "PHASIC++/Main/Process_Integrator.H"
+#include <PHASIC++/Process/ME_Generator_Base.H>
+#include <PHASIC++/Process/Process_Base.H>
+#include <PHASIC++/Process/Process_Info.H>
+#include <PHASIC++/Process/Subprocess_Info.H>
+#include <PHASIC++/Main/Process_Integrator.H>
 
 #include <sstream>
 #include <algorithm>
@@ -66,12 +66,12 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
         if(!found) THROW(fatal_error, "Could not assign pdg code.");
     }
     
-    for (unsigned int i(m_nin); i<m_nin+m_nout; i++)
+    for (size_t i(m_nin); i<m_nin+m_nout; i++)
     {
         // find the first occurence of a flavour of type pdgs[i] among the
         // external legs
         bool found = false;
-        for (unsigned int j(m_nin); j < m_nin+m_nout; j++)
+        for (size_t j(m_nin); j < m_nin+m_nout; j++)
         {
             if(((long int)(p_amp->Leg(j)->Flav()))
                ==((long int)(ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?true:false))))
@@ -137,10 +137,10 @@ void SherpaMECalculator::SetMomenta(size_t n)
                         ATOOLS::ToType<double>(cur[4]));
         ATOOLS::ColorID col(0,0);
         
-        if (cur.size()==7) col=ATOOLS::ColorID(ATOOLS::ToType<size_t>(cur[5]),
-                                               ATOOLS::ToType<size_t>(cur[6]));
+        if (cur.size()==7) col=ATOOLS::ColorID(ATOOLS::ToType<int>(cur[5]),
+                                               ATOOLS::ToType<int>(cur[6]));
         
-        int kfamp(p_amp->Leg(id)->Flav().Kfcode());
+        kf_code kfamp(p_amp->Leg(id)->Flav().Kfcode());
         
         if (id<m_nin) kfamp=-kfamp;
         
@@ -163,7 +163,7 @@ void SherpaMECalculator::SetMomenta(const std::vector<double*> &p)
     for (unsigned int i(0); i<m_nin; i++)
         p_amp->Leg(m_mom_inds[i])->SetMom(ATOOLS::Vec4D(-p[i][0], -p[i][1],
                                                         -p[i][2], -p[i][3]));
-    for (unsigned int i(m_nin); i<p.size(); i++)
+    for (size_t i(m_nin); i<p.size(); i++)
         p_amp->Leg(m_mom_inds[i])->SetMom(ATOOLS::Vec4D( p[i][0],  p[i][1],
                                                         p[i][2],  p[i][3]));
 }
@@ -256,31 +256,29 @@ void SherpaMECalculator::SetColors()
 
 PHASIC::Process_Base* SherpaMECalculator::FindProcess()
 {
-    SHERPA::Matrix_Element_Handler* me_handler = p_gen->GetInitHandler()->GetMatrixElementHandler();
-
+    SHERPA::Matrix_Element_Handler * me_handler = p_gen->GetInitHandler()->GetMatrixElementHandler();
+    
     PHASIC::Process_Base::SortFlavours(p_amp);
     m_name = PHASIC::Process_Base::GenerateName(p_amp);
-
-    for (unsigned int i(0); i<me_handler->ProcMaps().size(); i++)
+    
+    for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
     {
-        PHASIC::StringProcess_Map::const_iterator pit(me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second->find(m_name));
-
-        //FOR DEBUGGING PURPOSES
-         std::cout << "Initialized Processes: " << std::endl;
-         for (PHASIC::StringProcess_Map::const_iterator
-         	     it(me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second->begin());
-         	   it !=me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second->end();
-         	   ++it)
-         	{
-         	  std::cout << "Process " << (it->first)<< std::endl;
-         	}
-
-        if(pit == me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second->end())
-            continue;
-        else{
-            return pit->second;
+        PHASIC::StringProcess_Map * const stringMap = me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second;
+        
+        // FOR DEBUGGING PURPOSES
+        std::cout << "Initialized Processes: " << std::endl;
+        for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
+        {
+            std::cout << "Process " << (it->first) << std::endl;
         }
+
+        PHASIC::StringProcess_Map::const_iterator pit(stringMap->find(m_name));
+        if (pit == stringMap->end())
+            continue;
+
+        return pit->second;
     }
+    
     return NULL;
 }
 
@@ -314,7 +312,7 @@ void SherpaMECalculator::Initialize()
             
             p_amp->CreateLeg(ATOOLS::Vec4D(),fl);
             
-            m_inpdgs.push_back(fl.IsAnti()?-fl.Kfcode():fl.Kfcode());
+            m_inpdgs.push_back(int(fl.IsAnti()?-fl.Kfcode():fl.Kfcode()));
         }
         
         p_amp->SetNIn(m_nin=p_proc->NIn());
@@ -359,7 +357,7 @@ void SherpaMECalculator::Initialize()
             combination.push_back(mod+1);
             k = (k-mod)/3;
         }
-        for (int m(m_ncolinds/2); m<m_ncolinds; m++)
+        for (size_t m(m_ncolinds/2); m<m_ncolinds; m++)
         {
             mod  = k%3;
             switch(mod) {
@@ -401,7 +399,7 @@ double SherpaMECalculator::CSMatrixElement()
     std::vector<int>::const_iterator jt;
     for(it=m_colcombinations.begin(); it!=m_colcombinations.end(); ++it) {
         int ind(0);
-        int indbar(m_ncolinds/2);
+        size_t indbar(m_ncolinds/2);
         for(jt=m_gluinds.begin(); jt!=m_gluinds.end(); ++jt) {
             p_amp->Leg(*jt)->SetCol(ATOOLS::ColorID((*it)[ind], (*it)[indbar]));
             ind+=1;
