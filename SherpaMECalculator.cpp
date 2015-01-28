@@ -210,7 +210,7 @@ void SherpaMECalculator::AddOutFlav(const int &id)
 void SherpaMECalculator::AddInFlav(const int &id, const int &col1, const int &col2)
 {
     p_amp->CreateLeg(ATOOLS::Vec4D(),
-                     ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true),
+                     ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true),  // POTENTIAL BUG: shouldn't this be id>0?true:false as in the other AddInFlav above.
                      ATOOLS::ColorID(col1, col2));
     p_amp->SetNIn(p_amp->NIn()+1);
     m_inpdgs.push_back(id);
@@ -258,25 +258,64 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
 {
     SHERPA::Matrix_Element_Handler * me_handler = p_gen->GetInitHandler()->GetMatrixElementHandler();
     
-    PHASIC::Process_Base::SortFlavours(p_amp);
-    m_name = PHASIC::Process_Base::GenerateName(p_amp);
+    ATOOLS::Flavour_Vector matchFlavours;
+    {
+        const ATOOLS::ClusterLeg_Vector & legs = p_amp->Legs();
+        for (const ATOOLS::Cluster_Leg * leg : legs)
+            matchFlavours.push_back( leg->Flav() );
+    }
+    
+    PHASIC::Process_Base::SortFlavours(p_amp);  // Does NOT handle Decay processes (e.g. 2 -> 2 -> 4)
+
+    std::string matchName = PHASIC::Process_Base::GenerateName(p_amp);
+    
+    std::cout << "Searching for process by name: " << matchName << std::endl;
     
     for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
     {
-        PHASIC::StringProcess_Map * const stringMap = me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second;
+        const PHASIC::StringProcess_Map * const stringMap = me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second;
         
+        /*
         // FOR DEBUGGING PURPOSES
         std::cout << "Initialized Processes: " << std::endl;
         for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
         {
             std::cout << "Process " << (it->first) << std::endl;
         }
+        */
 
-        PHASIC::StringProcess_Map::const_iterator pit(stringMap->find(m_name));
+        PHASIC::StringProcess_Map::const_iterator pit(stringMap->find(matchName));
         if (pit == stringMap->end())
             continue;
 
         return pit->second;
+    }
+
+    // try to find match by legs
+    
+    std::cout << "Searching for process by flavours: " << matchFlavours << std::endl;
+
+    for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
+    {
+        const PHASIC::StringProcess_Map * const stringMap = me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second;
+
+        for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
+        {
+            //std::cout << "Process " << (it->first) << std::endl;
+
+            PHASIC::Process_Base * proc = it->second;
+            
+            //std::cout << "  - flavours: " << proc->Flavours() << std::endl;
+            
+            if ((proc->NIn() != p_amp->NIn()) || (proc->NOut() != m_nout))
+                continue;
+            
+            if (proc->Flavours() != matchFlavours)
+                continue;
+
+            std::cout << "Matched process " << proc->Name() << std::endl;
+            return proc;
+        }
     }
     
     return NULL;
@@ -286,6 +325,10 @@ void SherpaMECalculator::Initialize()
 {
     p_proc = FindProcess();
     
+    if (!p_proc)
+        THROW(fatal_error, "Could not find matching process" );
+    
+    /*
     // if no process was found, assume there is only
     // one initialized in the run card and take that one
     if(!p_proc)
@@ -317,6 +360,7 @@ void SherpaMECalculator::Initialize()
         
         p_amp->SetNIn(m_nin=p_proc->NIn());
     }
+    */
     
     m_name=p_proc->Name();
     
@@ -376,6 +420,7 @@ void SherpaMECalculator::Initialize()
          it!=m_inpdgs.end(); it++)  allpdgs.push_back(*it);
     for (std::vector<int>::const_iterator it=m_outpdgs.begin();
          it!=m_outpdgs.end(); it++) allpdgs.push_back(*it);
+
     SetMomentumIndices(allpdgs);
 }
 

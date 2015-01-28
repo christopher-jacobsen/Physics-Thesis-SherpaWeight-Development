@@ -16,9 +16,8 @@
 #include <TTree.h>
 
 #include <SHERPA/Main/Sherpa.H>
-#include <ATOOLS/Org/Exception.H>
-#include <ATOOLS/Phys/Cluster_Amplitude.H>
 #include <ATOOLS/Math/Vector.H>
+#include <ATOOLS/Phys/Cluster_Amplitude.H>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SMEX
@@ -280,4 +279,7 @@ void SMEX::ProcessEvent( SherpaEvent & event )
     }
     
     meCalc.SetMomenta( momenta );
+    
+    double me = meCalc.MatrixElement();
+    LogMsgInfo( "Event %i: ME=%E", FMT_I(event.id), FMT_F(me) );
 }
