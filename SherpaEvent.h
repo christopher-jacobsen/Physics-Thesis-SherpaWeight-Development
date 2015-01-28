@@ -17,14 +17,16 @@ class TTree;
 
 struct SherpaEvent
 {
+    static const size_t max_nparticle = 4;
+
     Int_t                       id              = 0;
 
     Int_t                       nparticle       = 0;
 
-    Float_t                     px[4]           = {};           // [nparticle]
-    Float_t                     py[4]           = {};           // [nparticle]
-    Float_t                     pz[4]           = {};           // [nparticle]
-    Float_t                     E[4]            = {};           // [nparticle]
+    Float_t                     px[max_nparticle]   = {};           // [nparticle]
+    Float_t                     py[max_nparticle]   = {};           // [nparticle]
+    Float_t                     pz[max_nparticle]   = {};           // [nparticle]
+    Float_t                     E [max_nparticle]   = {};           // [nparticle]
   //std::vector<Float_t> *      px              = nullptr;      // [nparticle]
   //std::vector<Float_t> *      py              = nullptr;      // [nparticle]
   //std::vector<Float_t> *      pz              = nullptr;      // [nparticle]
@@ -32,7 +34,7 @@ struct SherpaEvent
 
     Double_t                    alphas          = 0;
 
-    Int_t                       kf[4]           = {};           // [nparticle]
+    Int_t                       kf[max_nparticle]   = {};           // [nparticle]
   //std::vector<Int_t> *        kf              = nullptr;      // [nparticle]
 
     Double_t                    weight          = 0;

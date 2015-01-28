@@ -51,6 +51,14 @@ inline void LogMsgInfo( const char * format, ... ) throw()
     va_end(args);
 }
 
+inline void LogMsgWarning( const char * format, ... ) throw()
+{
+    std::va_list args;
+    va_start(args, format);
+    LogMsg( "Warning: ", format, args, stdout );
+    va_end(args);
+}
+
 inline void LogMsgError( const char * format, ... ) throw()
 {
     std::va_list args;
