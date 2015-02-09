@@ -199,20 +199,29 @@ void SMEX::ProcessEvent( SherpaEvent & event )
         double mass = P_out.Mass();
         double tau  = event.x1 * event.x2;          // x1 * x2 = mass^2 / s = tau
         double s    = mass * mass / tau;
-        double P    = sqrt(s) / 2;                  // s ~ 4P^2, proton momentum
+        double P    = sqrt(s/4-1);                  // P = proton momentum, s = 4(M_p^2 + P^2)
         double pz1  =  event.x1 * P;
         double pz2  = -event.x2 * P;
         
         // mass^2 = (e1+e2)^2-(pz1+pz2)^2 = (x1+x2)^2 * P^2 - x^2 * P^2
 
         // assume massless incoming partons
+        
+        double E1 = (P_out[0] + P_out[3]) / 2;
+        double E2 = (P_out[0] - P_out[3]) / 2;
 
+        P_in1[0] = E1; //pz1;   // fabs(pz1)
+        P_in1[3] = E1; //pz1;
+
+        P_in2[0] =  E2; //-pz2;  // fabs(pz2)
+        P_in2[3] = -E2; // pz2;
+        /*
         P_in1[0] = pz1;   // fabs(pz1)
         P_in1[3] = pz1;
 
         P_in2[0] = -pz2;  // fabs(pz2)
         P_in2[3] =  pz2;
-
+        */
         {
             // validate assumptions and calculation
     
