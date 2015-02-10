@@ -3,11 +3,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "SherpaWeightMain.h"
-
+#include "SherpaWeight.h"
 #include "SherpaRootEvent.h"
-#include "SherpaMECalculator.h"
 
 #include "common.h"
+
+#include <ATOOLS/Org/Exception.H>
+#include <ATOOLS/Math/Vector.H>
 
 // TODO: pragma warnings away?
 #include <TROOT.h>
@@ -15,17 +17,13 @@
 #include <TFile.h>
 #include <TTree.h>
 
-#include <SHERPA/Main/Sherpa.H>
-#include <ATOOLS/Math/Vector.H>
-#include <ATOOLS/Phys/Cluster_Amplitude.H>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 SherpaWeightMain::SherpaWeightMain()
-    : m_upSherpa( new SHERPA::Sherpa )
+    : m_upSherpaWeight( new SherpaWeight )
 {
 }
 
@@ -68,11 +66,7 @@ int SherpaWeightMain::Run( const RunParameters & param )
 {
     try
     {
-        if (!m_upSherpa->InitializeTheRun( (int)param.argv.size(), const_cast<char **>(param.argv.data()) ))
-        {
-            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-            return -2;
-        }
+        m_upSherpaWeight->Initialize( param.argv );
         
         /*
         struct Local  // local object for automated cleanup
@@ -176,13 +170,13 @@ void SherpaWeightMain::ProcessEvent( SherpaRootEvent & event )
     
     if (event.nparticle > SherpaRootEvent::max_nparticle )
     {
-        LogMsgError( "Number of particles in event exceeds maximum. nparticles=%i (max %u).", FMT_I(event.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
+        LogMsgError( "Number of outgoing particles in event exceeds maximum. nparticles=%i (max %u).", FMT_I(event.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
         return;
     }
 
     if (event.nparticle <= 0)
     {
-        LogMsgWarning( "Skipping event %i. No particles.", FMT_I(event.id) );
+        LogMsgWarning( "Skipping event %i. No outgoing particles.", FMT_I(event.id) );
         return;
     }
 
@@ -197,11 +191,11 @@ void SherpaWeightMain::ProcessEvent( SherpaRootEvent & event )
         }
         
         double mass = P_out.Mass();
-        double tau  = event.x1 * event.x2;          // x1 * x2 = mass^2 / s = tau
-        double s    = mass * mass / tau;
-        double P    = sqrt(s/4-1);                  // P = proton momentum, s = 4(M_p^2 + P^2)
-        double pz1  =  event.x1 * P;
-        double pz2  = -event.x2 * P;
+        //double tau  = event.x1 * event.x2;          // x1 * x2 = mass^2 / s = tau
+        //double s    = mass * mass / tau;
+        //double P    = sqrt(s/4-1);                  // P = proton momentum, s = 4(M_p^2 + P^2)
+        //double pz1  =  event.x1 * P;
+        //double pz2  = -event.x2 * P;
         
         // mass^2 = (e1+e2)^2-(pz1+pz2)^2 = (x1+x2)^2 * P^2 - x^2 * P^2
 
@@ -241,15 +235,13 @@ void SherpaWeightMain::ProcessEvent( SherpaRootEvent & event )
             }
         }
     }
-
-    // create a MEProcess instance
-    SherpaMECalculator meCalc( m_upSherpa.get() );
-
+    
     // define the flavors and momenta
+    std::vector<int>     particles;
     ATOOLS::Vec4D_Vector momenta;
     {
-        meCalc.AddInFlav( event.id1 );
-        meCalc.AddInFlav( event.id2 );
+        particles.push_back( event.id1 );
+        particles.push_back( event.id2 );
         
         momenta.push_back( P_in1 );
         momenta.push_back( P_in2 );
@@ -257,98 +249,13 @@ void SherpaWeightMain::ProcessEvent( SherpaRootEvent & event )
         for (Int_t i = 0; i < event.nparticle; ++i)
         {
             Int_t code = event.kf[i];
-            meCalc.AddOutFlav( code );
+            particles.push_back( code );
             
             ATOOLS::Vec4D P_part( event.E[i], event.px[i], event.py[i], event.pz[i] );
             momenta.push_back( P_part );
         }
     }
 
-    /*
-    {
-        MODEL::ScalarConstantsMap * pConstants = meCalc.GetModelScalarConstants();
-        if (pConstants)
-        {
-            for (const auto & entry : *pConstants)
-            {
-                std::cout << entry.first << ": " << entry.second << std::endl;
-            }
-        }
-    }
-    */
-
-    try
-    {
-        meCalc.Initialize();
-    }
-    catch (const ATOOLS::Exception & error)
-    {
-        LogMsgError( "Sherpa exception caught: \"%hs\" in %hs::%hs",
-            FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
-        
-        LogMsgInfo( "Sherpa process name: \"%hs\"", FMT_HS(meCalc.Name().c_str()) );
-        
-        const ATOOLS::Cluster_Amplitude * pAmp = meCalc.GetAmp();
-        if (!pAmp)
-            LogMsgInfo("Sherpa process cluster amplitude: null");
-        else
-        {
-            const ATOOLS::ClusterLeg_Vector & legs = pAmp->Legs();
-            int bob = 5;
-        }
-
-        throw;
-    }
-    
-    meCalc.SetMomenta( momenta );
-    
-    double me = meCalc.MatrixElement();
-    LogMsgInfo( "Event %i: ME=%E", FMT_I(event.id), FMT_F(me) );
-
-    {
-        MODEL::ScalarConstantsMap * pConstants = meCalc.GetModelScalarConstants();
-        if (pConstants)
-        {
-            /**/
-            for (const auto & entry : *pConstants)
-            {
-                std::cout << entry.first << ": " << entry.second << std::endl;
-            }
-            /**/
-            
-            double aEWM1 = 227.9;
-            
-            MODEL::ScalarConstantsMap::iterator itrFind = pConstants->find( "aEWM1" );
-            if (itrFind != pConstants->end())
-            {
-                MODEL::ScalarConstantsMap::value_type & constantPair = *itrFind;
-                constantPair.second = aEWM1;
-            
-                double sw = pConstants->at("sw");
-                double cw = pConstants->at("cw");
-
-                double aEW = pow(aEWM1,-1.);
-                double ee = 2.*sqrt(aEW)*sqrt(M_PI);
-                double gw = ee*pow(sw,-1.);
-                double g1 = ee*pow(cw,-1.);
-
-                pConstants->at("aEW") = aEW;
-                pConstants->at("ee")  = ee;
-                pConstants->at("gw")  = gw;
-                pConstants->at("g1")  = g1;
-                
-            }
-
-            /**/
-            std::cout << "------------" << std::endl;
-            for (const auto & entry : *pConstants)
-            {
-                std::cout << entry.first << ": " << entry.second << std::endl;
-            }
-            /**/
-        }
-    }
-    
-    double me2 = meCalc.MatrixElement();
-    LogMsgInfo( "Event %i: ME2=%E", FMT_I(event.id), FMT_F(me2) );
+    // process the event
+    m_upSherpaWeight->ProcessEvent( event.id, 2, particles, momenta );    
 }

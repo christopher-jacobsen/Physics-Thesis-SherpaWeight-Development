@@ -9,12 +9,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // forward declarations
-struct SherpaRootEvent;
 
-namespace SHERPA
-{
-class Sherpa;
-}
+struct SherpaRootEvent;
+class  SherpaWeight;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +38,7 @@ private:
     void ProcessEvent( SherpaRootEvent & event );
     
 private:
-    std::unique_ptr<SHERPA::Sherpa> m_upSherpa;
+    std::unique_ptr<SherpaWeight> m_upSherpaWeight;
 
 private:
     SherpaWeightMain(const SherpaWeightMain &) = delete;

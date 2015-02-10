@@ -11,6 +11,7 @@
 		230EC6E51A77A16800DC49D3 /* SherpaWeightMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SherpaWeightMain.cpp */; };
 		230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */; };
 		232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232B88701A78C448009534D6 /* SherpaMECalculator.cpp */; };
+		238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +38,8 @@
 		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = "<group>"; };
 		232B88701A78C448009534D6 /* SherpaMECalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMECalculator.cpp; path = ../SherpaMECalculator.cpp; sourceTree = "<group>"; };
 		232B88711A78C448009534D6 /* SherpaMECalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMECalculator.h; path = ../SherpaMECalculator.h; sourceTree = "<group>"; };
+		238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeight.cpp; path = ../SherpaWeight.cpp; sourceTree = "<group>"; };
+		238522FB1A8A419300CE0D2D /* SherpaWeight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeight.h; path = ../SherpaWeight.h; sourceTree = "<group>"; };
 		23E1FC1A1A8A3BF600CA3DFF /* MEProcess.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = "<group>"; };
 		23E1FC1B1A8A3BF600CA3DFF /* MEProcess.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MEProcess.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.H"; sourceTree = "<group>"; };
 		23E1FC1C1A8A3BF600CA3DFF /* MEProcess.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = "<group>"; };
@@ -79,6 +82,8 @@
 				230EC6E21A77A16800DC49D3 /* SherpaWeightMain.cpp */,
 				230EC6E61A77BE6600DC49D3 /* SherpaRootEvent.h */,
 				230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */,
+				238522FB1A8A419300CE0D2D /* SherpaWeight.h */,
+				238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */,
 				232B88701A78C448009534D6 /* SherpaMECalculator.cpp */,
 				232B88711A78C448009534D6 /* SherpaMECalculator.h */,
 			);
@@ -148,6 +153,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */,
 				230EC6E51A77A16800DC49D3 /* SherpaWeightMain.cpp in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
 				232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */,
