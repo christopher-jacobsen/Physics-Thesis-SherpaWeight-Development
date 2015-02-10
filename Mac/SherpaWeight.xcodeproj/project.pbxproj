@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		230EC6E41A77A16800DC49D3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E11A77A16800DC49D3 /* main.cpp */; };
-		230EC6E51A77A16800DC49D3 /* SMEX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SMEX.cpp */; };
+		230EC6E51A77A16800DC49D3 /* SherpaWeight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SherpaWeight.cpp */; };
 		230EC6E81A77C23400DC49D3 /* SherpaEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */; };
 		232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232B88701A78C448009534D6 /* SherpaMECalculator.cpp */; };
 /* End PBXBuildFile section */
@@ -26,11 +26,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		230EC6D31A77A10F00DC49D3 /* SMEX */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SMEX; sourceTree = BUILT_PRODUCTS_DIR; };
+		230EC6D31A77A10F00DC49D3 /* SherpaWeight */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SherpaWeight; sourceTree = BUILT_PRODUCTS_DIR; };
 		230EC6E01A77A16800DC49D3 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../common.h; sourceTree = "<group>"; };
 		230EC6E11A77A16800DC49D3 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../main.cpp; sourceTree = "<group>"; };
-		230EC6E21A77A16800DC49D3 /* SMEX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SMEX.cpp; path = ../SMEX.cpp; sourceTree = "<group>"; };
-		230EC6E31A77A16800DC49D3 /* SMEX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SMEX.h; path = ../SMEX.h; sourceTree = "<group>"; };
+		230EC6E21A77A16800DC49D3 /* SherpaWeight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeight.cpp; path = ../SherpaWeight.cpp; sourceTree = "<group>"; };
+		230EC6E31A77A16800DC49D3 /* SherpaWeight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeight.h; path = ../SherpaWeight.h; sourceTree = "<group>"; };
 		230EC6E61A77BE6600DC49D3 /* SherpaEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SherpaEvent.h; path = ../SherpaEvent.h; sourceTree = "<group>"; };
 		230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaEvent.cpp; path = ../SherpaEvent.cpp; sourceTree = "<group>"; };
 		232B886B1A782C32009534D6 /* MEProcess.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = "<group>"; };
@@ -65,7 +65,7 @@
 		230EC6D41A77A10F00DC49D3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				230EC6D31A77A10F00DC49D3 /* SMEX */,
+				230EC6D31A77A10F00DC49D3 /* SherpaWeight */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -75,8 +75,8 @@
 			children = (
 				230EC6E01A77A16800DC49D3 /* common.h */,
 				230EC6E11A77A16800DC49D3 /* main.cpp */,
-				230EC6E31A77A16800DC49D3 /* SMEX.h */,
-				230EC6E21A77A16800DC49D3 /* SMEX.cpp */,
+				230EC6E31A77A16800DC49D3 /* SherpaWeight.h */,
+				230EC6E21A77A16800DC49D3 /* SherpaWeight.cpp */,
 				230EC6E61A77BE6600DC49D3 /* SherpaEvent.h */,
 				230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */,
 				232B88701A78C448009534D6 /* SherpaMECalculator.cpp */,
@@ -100,9 +100,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		230EC6D21A77A10F00DC49D3 /* SMEX */ = {
+		230EC6D21A77A10F00DC49D3 /* SherpaWeight */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 230EC6DC1A77A10F00DC49D3 /* Build configuration list for PBXNativeTarget "SMEX" */;
+			buildConfigurationList = 230EC6DC1A77A10F00DC49D3 /* Build configuration list for PBXNativeTarget "SherpaWeight" */;
 			buildPhases = (
 				230EC6CF1A77A10F00DC49D3 /* Sources */,
 				230EC6D01A77A10F00DC49D3 /* Frameworks */,
@@ -112,9 +112,9 @@
 			);
 			dependencies = (
 			);
-			name = SMEX;
-			productName = SMEX;
-			productReference = 230EC6D31A77A10F00DC49D3 /* SMEX */;
+			name = SherpaWeight;
+			productName = SherpaWeight;
+			productReference = 230EC6D31A77A10F00DC49D3 /* SherpaWeight */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -126,7 +126,7 @@
 				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = chroja;
 			};
-			buildConfigurationList = 230EC6CE1A77A10F00DC49D3 /* Build configuration list for PBXProject "SMEX" */;
+			buildConfigurationList = 230EC6CE1A77A10F00DC49D3 /* Build configuration list for PBXProject "SherpaWeight" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -138,7 +138,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				230EC6D21A77A10F00DC49D3 /* SMEX */,
+				230EC6D21A77A10F00DC49D3 /* SherpaWeight */,
 			);
 		};
 /* End PBXProject section */
@@ -148,7 +148,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				230EC6E51A77A16800DC49D3 /* SMEX.cpp in Sources */,
+				230EC6E51A77A16800DC49D3 /* SherpaWeight.cpp in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
 				232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */,
 				230EC6E81A77C23400DC49D3 /* SherpaEvent.cpp in Sources */,
@@ -307,21 +307,21 @@
 		230EC6DD1A77A10F00DC49D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = SherpaWeight;
 			};
 			name = Debug;
 		};
 		230EC6DE1A77A10F00DC49D3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = SherpaWeight;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		230EC6CE1A77A10F00DC49D3 /* Build configuration list for PBXProject "SMEX" */ = {
+		230EC6CE1A77A10F00DC49D3 /* Build configuration list for PBXProject "SherpaWeight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				230EC6DA1A77A10F00DC49D3 /* Debug */,
@@ -330,7 +330,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		230EC6DC1A77A10F00DC49D3 /* Build configuration list for PBXNativeTarget "SMEX" */ = {
+		230EC6DC1A77A10F00DC49D3 /* Build configuration list for PBXNativeTarget "SherpaWeight" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				230EC6DD1A77A10F00DC49D3 /* Debug */,

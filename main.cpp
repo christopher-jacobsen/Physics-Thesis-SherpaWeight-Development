@@ -3,7 +3,7 @@
 //  SMEX
 
 #include "common.h"
-#include "SMEX.h"
+#include "SherpaWeight.h"
 
 int main(int argc, const char * argv[])
 {
