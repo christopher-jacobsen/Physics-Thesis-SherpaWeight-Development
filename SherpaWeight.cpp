@@ -20,22 +20,22 @@
 #include <ATOOLS/Phys/Cluster_Amplitude.H>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// class SMEX
+// class SherpaWeight
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-SMEX::SMEX()
+SherpaWeight::SherpaWeight()
     : m_upSherpa( new SHERPA::Sherpa )
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-SMEX::~SMEX() throw()
+SherpaWeight::~SherpaWeight() throw()
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int SMEX::ParseCommandLine( int argc, const char * argv[], RunParameters & param )
+int SherpaWeight::ParseCommandLine( int argc, const char * argv[], RunParameters & param )
 {
     param = RunParameters();  // clear all values in case of error
 
@@ -59,12 +59,12 @@ int SMEX::ParseCommandLine( int argc, const char * argv[], RunParameters & param
     return 0;
 
  USAGE:
-    LogMsgInfo("Usage: SMEX input_root_file output_root_file");
+    LogMsgInfo("Usage: SherpaWeight input_root_file output_root_file");
     return -1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int SMEX::Run( const RunParameters & param )
+int SherpaWeight::Run( const RunParameters & param )
 {
     try
     {
@@ -115,7 +115,7 @@ int SMEX::Run( const RunParameters & param )
         }
 
         // create output tree
-        TTree * pOutputTree( new TTree( "t3", "SMEX" ) );   // owned by current directory
+        TTree * pOutputTree( new TTree( "t3", "SherpaWeight" ) );   // owned by current directory
         if (pOutputTree->IsZombie())
         {
             LogMsgError("Failed to construct output tree.");
@@ -170,7 +170,7 @@ int SMEX::Run( const RunParameters & param )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SMEX::ProcessEvent( SherpaEvent & event )
+void SherpaWeight::ProcessEvent( SherpaEvent & event )
 {
     // validate event
     

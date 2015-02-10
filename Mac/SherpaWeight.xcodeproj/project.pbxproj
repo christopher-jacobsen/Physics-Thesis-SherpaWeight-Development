@@ -33,13 +33,13 @@
 		230EC6E31A77A16800DC49D3 /* SherpaWeight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeight.h; path = ../SherpaWeight.h; sourceTree = "<group>"; };
 		230EC6E61A77BE6600DC49D3 /* SherpaEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SherpaEvent.h; path = ../SherpaEvent.h; sourceTree = "<group>"; };
 		230EC6E71A77C23400DC49D3 /* SherpaEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaEvent.cpp; path = ../SherpaEvent.cpp; sourceTree = "<group>"; };
-		232B886B1A782C32009534D6 /* MEProcess.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = "<group>"; };
-		232B886C1A782C32009534D6 /* MEProcess.H */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = MEProcess.H; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.H"; sourceTree = "<group>"; };
-		232B886D1A782C32009534D6 /* MEProcess.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../Sherpa/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = "<group>"; };
-		232B886E1A784AEB009534D6 /* test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = test.cpp; path = "../../../Sherpa/SHERPA-MC-2.1.1/Examples/API/ME2-CPP/test.cpp"; sourceTree = "<group>"; };
-		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../Sherpa/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = "<group>"; };
+		232B886E1A784AEB009534D6 /* test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = test.cpp; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/Examples/API/ME2-CPP/test.cpp"; sourceTree = "<group>"; };
+		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = "<group>"; };
 		232B88701A78C448009534D6 /* SherpaMECalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMECalculator.cpp; path = ../SherpaMECalculator.cpp; sourceTree = "<group>"; };
 		232B88711A78C448009534D6 /* SherpaMECalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMECalculator.h; path = ../SherpaMECalculator.h; sourceTree = "<group>"; };
+		23E1FC1A1A8A3BF600CA3DFF /* MEProcess.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = "<group>"; };
+		23E1FC1B1A8A3BF600CA3DFF /* MEProcess.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MEProcess.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.H"; sourceTree = "<group>"; };
+		23E1FC1C1A8A3BF600CA3DFF /* MEProcess.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,9 +90,9 @@
 			children = (
 				232B886F1A784EBF009534D6 /* test.py.in */,
 				232B886E1A784AEB009534D6 /* test.cpp */,
-				232B886B1A782C32009534D6 /* MEProcess.C */,
-				232B886C1A782C32009534D6 /* MEProcess.H */,
-				232B886D1A782C32009534D6 /* MEProcess.i */,
+				23E1FC1A1A8A3BF600CA3DFF /* MEProcess.C */,
+				23E1FC1B1A8A3BF600CA3DFF /* MEProcess.H */,
+				23E1FC1C1A8A3BF600CA3DFF /* MEProcess.i */,
 			);
 			name = "Other Files";
 			sourceTree = "<group>";

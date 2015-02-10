@@ -2,8 +2,8 @@
 //  SherpaWeight.h
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SMEX_H
-#define SMEX_H
+#ifndef SHERPAWEIGHT_H
+#define SHERPAWEIGHT_H
 
 #include "common.h"
 
@@ -18,7 +18,7 @@ class Sherpa;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class SMEX
+class SherpaWeight
 {
 public:
     struct RunParameters
@@ -30,8 +30,8 @@ public:
     };
 
 public:
-    SMEX();
-    ~SMEX() throw();
+    SherpaWeight();
+    ~SherpaWeight() throw();
     
     int ParseCommandLine( int argc, const char * argv[], RunParameters & param );
     
@@ -44,8 +44,8 @@ private:
     std::unique_ptr<SHERPA::Sherpa> m_upSherpa;
 
 private:
-    SMEX(const SMEX &) = delete;
-    SMEX & operator=(const SMEX &) = delete;
+    SherpaWeight(const SherpaWeight &) = delete;
+    SherpaWeight & operator=(const SherpaWeight &) = delete;
 };
 
-#endif // SMEX_H
+#endif // SHERPAWEIGHT_H

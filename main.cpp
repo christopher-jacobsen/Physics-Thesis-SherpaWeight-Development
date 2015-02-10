@@ -1,6 +1,6 @@
 //
 //  main.cpp
-//  SMEX
+//  SherpaWeight
 
 #include "common.h"
 #include "SherpaWeight.h"
@@ -10,14 +10,14 @@ int main(int argc, const char * argv[])
     try
     {
         int  result = 0;
-        SMEX smex;
+        SherpaWeight SherpaWeight;
         
-        SMEX::RunParameters param;
-        result = smex.ParseCommandLine( argc, argv, param );
+        SherpaWeight::RunParameters param;
+        result = SherpaWeight.ParseCommandLine( argc, argv, param );
         if (result != 0)
             return result;
         
-        return smex.Run( param );
+        return SherpaWeight.Run( param );
     }
     catch (const std::exception & error)
     {
