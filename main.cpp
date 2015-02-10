@@ -3,16 +3,16 @@
 //  SherpaWeight
 
 #include "common.h"
-#include "SherpaWeight.h"
+#include "SherpaWeightMain.h"
 
 int main(int argc, const char * argv[])
 {
     try
     {
         int  result = 0;
-        SherpaWeight SherpaWeight;
+        SherpaWeightMain SherpaWeight;
         
-        SherpaWeight::RunParameters param;
+        SherpaWeightMain::RunParameters param;
         result = SherpaWeight.ParseCommandLine( argc, argv, param );
         if (result != 0)
             return result;

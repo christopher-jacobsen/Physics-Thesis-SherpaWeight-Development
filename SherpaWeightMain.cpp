@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//  SherpaWeight.cpp
+//  SherpaWeightMain.cpp
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "SherpaWeight.h"
+#include "SherpaWeightMain.h"
 
-#include "SherpaEvent.h"
+#include "SherpaRootEvent.h"
 #include "SherpaMECalculator.h"
 
 #include "common.h"
@@ -24,18 +24,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-SherpaWeight::SherpaWeight()
+SherpaWeightMain::SherpaWeightMain()
     : m_upSherpa( new SHERPA::Sherpa )
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-SherpaWeight::~SherpaWeight() throw()
+SherpaWeightMain::~SherpaWeightMain() throw()
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int SherpaWeight::ParseCommandLine( int argc, const char * argv[], RunParameters & param )
+int SherpaWeightMain::ParseCommandLine( int argc, const char * argv[], RunParameters & param )
 {
     param = RunParameters();  // clear all values in case of error
 
@@ -64,7 +64,7 @@ int SherpaWeight::ParseCommandLine( int argc, const char * argv[], RunParameters
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int SherpaWeight::Run( const RunParameters & param )
+int SherpaWeightMain::Run( const RunParameters & param )
 {
     try
     {
@@ -125,7 +125,7 @@ int SherpaWeight::Run( const RunParameters & param )
         pOutputTree->SetAutoSave(0);                       // disable autosave
 
         // create event and connect/declare variables
-        SherpaEvent currentEvent;
+        SherpaRootEvent currentEvent;
         currentEvent.SetInputTree( pInputTree );
         currentEvent.SetOutputTree( pOutputTree );
         
@@ -170,13 +170,13 @@ int SherpaWeight::Run( const RunParameters & param )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::ProcessEvent( SherpaEvent & event )
+void SherpaWeightMain::ProcessEvent( SherpaRootEvent & event )
 {
     // validate event
     
-    if (event.nparticle > SherpaEvent::max_nparticle )
+    if (event.nparticle > SherpaRootEvent::max_nparticle )
     {
-        LogMsgError( "Number of particles in event exceeds maximum. nparticles=%i (max %u).", FMT_I(event.nparticle), FMT_U(SherpaEvent::max_nparticle) );
+        LogMsgError( "Number of particles in event exceeds maximum. nparticles=%i (max %u).", FMT_I(event.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
         return;
     }
 

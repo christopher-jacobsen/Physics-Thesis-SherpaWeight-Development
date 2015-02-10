@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//  SherpaEvent.cpp
+//  SherpaRootEvent.cpp
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "SherpaEvent.h"
+#include "SherpaRootEvent.h"
 
 #include "common.h"
 #include <sstream>
@@ -54,7 +54,7 @@ static bool CreateBranchForVariable( TTree * pTree, const char * branchName, T v
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaEvent::SetInputTree( TTree * pTree )
+void SherpaRootEvent::SetInputTree( TTree * pTree )
 {
     pTree->SetMakeClass(1);
     
@@ -88,7 +88,7 @@ void SherpaEvent::SetInputTree( TTree * pTree )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaEvent::SetOutputTree( TTree * pTree )
+void SherpaRootEvent::SetOutputTree( TTree * pTree )
 {
     CreateBranchForVariable( pTree, "id",          id          );
     CreateBranchForVariable( pTree, "nparticle",   nparticle   );

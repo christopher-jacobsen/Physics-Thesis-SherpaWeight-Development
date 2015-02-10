@@ -1,15 +1,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//  SherpaWeight.h
+//  SherpaWeightMain.h
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SHERPAWEIGHT_H
-#define SHERPAWEIGHT_H
+#ifndef SHERPAWEIGHTMAIN_H
+#define SHERPAWEIGHTMAIN_H
 
 #include "common.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // forward declarations
-struct SherpaEvent;
+struct SherpaRootEvent;
 
 namespace SHERPA
 {
@@ -18,7 +18,7 @@ class Sherpa;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class SherpaWeight
+class SherpaWeightMain
 {
 public:
     struct RunParameters
@@ -30,22 +30,22 @@ public:
     };
 
 public:
-    SherpaWeight();
-    ~SherpaWeight() throw();
+    SherpaWeightMain();
+    ~SherpaWeightMain() throw();
     
     int ParseCommandLine( int argc, const char * argv[], RunParameters & param );
     
     int Run( const RunParameters & param );
     
 private:
-    void ProcessEvent( SherpaEvent & event );
+    void ProcessEvent( SherpaRootEvent & event );
     
 private:
     std::unique_ptr<SHERPA::Sherpa> m_upSherpa;
 
 private:
-    SherpaWeight(const SherpaWeight &) = delete;
-    SherpaWeight & operator=(const SherpaWeight &) = delete;
+    SherpaWeightMain(const SherpaWeightMain &) = delete;
+    SherpaWeightMain & operator=(const SherpaWeightMain &) = delete;
 };
 
-#endif // SHERPAWEIGHT_H
+#endif // SHERPAWEIGHTMAIN_H
