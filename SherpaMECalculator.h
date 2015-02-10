@@ -10,6 +10,7 @@
 
 #include "ATOOLS/Math/Vector.H"
 #include "ATOOLS/Phys/Flavour.H"
+#include "MODEL/Main/Model_Base.H"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // forward declarations
@@ -76,6 +77,8 @@ public:
     void SetMomentum(const size_t & id, const double & E , const double & px,
                                         const double & py, const double & pz);
     void SetMomentum(const size_t & id, const ATOOLS::Vec4D & p);
+
+    MODEL::ScalarConstantsMap * GetModelScalarConstants();
 
     double MatrixElement();
     double CSMatrixElement();

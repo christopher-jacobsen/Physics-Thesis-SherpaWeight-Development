@@ -264,6 +264,19 @@ void SMEX::ProcessEvent( SherpaEvent & event )
         }
     }
 
+    /*
+    {
+        MODEL::ScalarConstantsMap * pConstants = meCalc.GetModelScalarConstants();
+        if (pConstants)
+        {
+            for (const auto & entry : *pConstants)
+            {
+                std::cout << entry.first << ": " << entry.second << std::endl;
+            }
+        }
+    }
+    */
+
     try
     {
         meCalc.Initialize();
@@ -291,4 +304,51 @@ void SMEX::ProcessEvent( SherpaEvent & event )
     
     double me = meCalc.MatrixElement();
     LogMsgInfo( "Event %i: ME=%E", FMT_I(event.id), FMT_F(me) );
+
+    {
+        MODEL::ScalarConstantsMap * pConstants = meCalc.GetModelScalarConstants();
+        if (pConstants)
+        {
+            /**/
+            for (const auto & entry : *pConstants)
+            {
+                std::cout << entry.first << ": " << entry.second << std::endl;
+            }
+            /**/
+            
+            double aEWM1 = 227.9;
+            
+            MODEL::ScalarConstantsMap::iterator itrFind = pConstants->find( "aEWM1" );
+            if (itrFind != pConstants->end())
+            {
+                MODEL::ScalarConstantsMap::value_type & constantPair = *itrFind;
+                constantPair.second = aEWM1;
+            
+                double sw = pConstants->at("sw");
+                double cw = pConstants->at("cw");
+
+                double aEW = pow(aEWM1,-1.);
+                double ee = 2.*sqrt(aEW)*sqrt(M_PI);
+                double gw = ee*pow(sw,-1.);
+                double g1 = ee*pow(cw,-1.);
+
+                pConstants->at("aEW") = aEW;
+                pConstants->at("ee")  = ee;
+                pConstants->at("gw")  = gw;
+                pConstants->at("g1")  = g1;
+                
+            }
+
+            /**/
+            std::cout << "------------" << std::endl;
+            for (const auto & entry : *pConstants)
+            {
+                std::cout << entry.first << ": " << entry.second << std::endl;
+            }
+            /**/
+        }
+    }
+    
+    double me2 = meCalc.MatrixElement();
+    LogMsgInfo( "Event %i: ME2=%E", FMT_I(event.id), FMT_F(me2) );
 }

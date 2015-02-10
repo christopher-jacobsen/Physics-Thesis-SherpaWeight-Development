@@ -265,6 +265,11 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
             matchFlavours.push_back( leg->Flav() );
     }
     
+    // TODO: sorting the flavors, has a side-effect of barring the in products, and changing their order.
+    // Is this required for getting the ME, or is it done when getting the ME?
+    
+    // TODO: consider removing (or commenting out the finding by name code
+    
     PHASIC::Process_Base::SortFlavours(p_amp);  // Does NOT handle Decay processes (e.g. 2 -> 2 -> 4)
 
     std::string matchName = PHASIC::Process_Base::GenerateName(p_amp);
@@ -424,12 +429,19 @@ void SherpaMECalculator::Initialize()
     SetMomentumIndices(allpdgs);
 }
 
+MODEL::ScalarConstantsMap * SherpaMECalculator::GetModelScalarConstants()
+{
+    return p_gen->GetInitHandler()->GetModel()->GetScalarConstants();
+}
+
 double SherpaMECalculator::MatrixElement()
 {
-    if (!HasColorIntegrator()) return p_proc->Differential(*p_amp);
+    if (!HasColorIntegrator())
+        return p_proc->Differential(*p_amp);
+
     SP(PHASIC::Color_Integrator) ci(p_proc->Integrator()->ColorIntegrator());
     ci->SetWOn(false);
-    double res(p_proc->Differential(*p_amp));
+    double res = p_proc->Differential(*p_amp);
     ci->SetWOn(true);
     return res;
 }
