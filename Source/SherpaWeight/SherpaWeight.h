@@ -7,20 +7,12 @@
 
 #include "common.h"
 
-#include <TMatrixDfwd.h> // forward declaration only
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // forward declarations
 
-namespace ATOOLS
+namespace SHERPA
 {
-
-template<typename>
-class Vec4;
-
-typedef Vec4<double>            Vec4D;
-typedef std::vector<Vec4D>      Vec4D_Vector;
-
+class Sherpa;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,33 +22,56 @@ typedef std::vector<Vec4D>      Vec4D_Vector;
 class SherpaWeight
 {
 public:
-    SherpaWeight();
-    ~SherpaWeight() throw();
-
-    void Initialize( const std::vector<const char *> & argv );
-
-    void ProcessEvent( int32_t eventId, size_t nInParticles, const std::vector<int> & particleCodes, const ATOOLS::Vec4D_Vector & particleMomenta );
-
-private:
     struct ReweightParameter
     {
         std::string     name;
         double          scale   = 1.0;
         double          offset  = 0.0;
     };
+    
+    typedef std::vector<ReweightParameter>  ParameterVector;
+    typedef std::vector<std::string>        StringVector;
+    typedef std::vector<double>             DoubleVector;
+    typedef std::vector<DoubleVector>       DoubleMatrix;
+    
+public:
+    SherpaWeight();
+    ~SherpaWeight() throw();
+
+    void Initialize( const std::string & eventFileName, const std::vector<const char *> & argv );
+    
+    const ParameterVector &  Parameters()       const           { return m_parameters; }
+    const StringVector &     CoefficientNames() const           { return m_coefNames;  }
+
+    size_t NParameters()   const throw()                        { return m_parameters.size(); }
+    size_t NCoefficients() const throw()                        { return m_coefNames.size();  }
+    
+    const DoubleMatrix & EvaluationMatrix() const               { return m_evalMatrix;    }
+    const DoubleMatrix & InverseCoefficientMatrix() const       { return m_invCoefMatrix; }
+
+    void EvaluateEvents();
+
+    const DoubleVector & MatrixElements(    int32_t eventId ) const;
+    const DoubleVector & CoefficientValues( int32_t eventId ) const;
+
+    
+    static void GetBilinearMatrices( const ParameterVector & parameters, DoubleMatrix & evalMatrix,
+                                                                         DoubleMatrix & invCoefMatrix,
+                                                                         StringVector & coefNames );
 
 private:
-    static void GetBilinearMatrices( const std::vector<ReweightParameter> & parameters, TMatrixD & evalMatrix, TMatrixD & invCoefMatrix );
-
-    static void CreateParamCard( const std::string & srcFilePath, const std::string & dstFilePath,
-                                 const std::vector<ReweightParameter> & parameters,
-                                 const std::vector<double> & paramValues );
+    static void CreateFeynRulesParamCard( const std::string & srcFilePath,    const std::string & dstFilePath,
+                                          const ParameterVector & parameters, const DoubleVector & paramValues );
 
 private:
-    std::vector<const char *>           m_argv;
-    std::vector<ReweightParameter>      m_parameters;
-    size_t                              m_nEvaluations      = 0;    // number of evaluations
-    std::vector<std::string>            m_paramCards;               // size = m_nEvaluations
+    std::unique_ptr<SHERPA::Sherpa>     m_upSherpa;
+    std::string                         m_eventFileName;
+    ParameterVector                     m_parameters;
+    DoubleMatrix                        m_evalMatrix;
+    DoubleMatrix                        m_invCoefMatrix;
+    StringVector                        m_coefNames;                // size = m_nCoefficients
+    StringVector                        m_paramCards;               // size = m_nCoefficients
+    std::map< int32_t, DoubleVector >   m_matrixElements;
 
 private:
     SherpaWeight(const SherpaWeight &) = delete;

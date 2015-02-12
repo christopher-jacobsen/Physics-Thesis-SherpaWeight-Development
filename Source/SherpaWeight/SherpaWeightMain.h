@@ -33,9 +33,9 @@ public:
     int ParseCommandLine( int argc, const char * argv[], RunParameters & param );
     
     int Run( const RunParameters & param );
-    
+
 private:
-    void ProcessEvent( SherpaRootEvent & event );
+    void SaveCoefficients( const RunParameters & param );
     
 private:
     std::unique_ptr<SherpaWeight> m_upSherpaWeight;

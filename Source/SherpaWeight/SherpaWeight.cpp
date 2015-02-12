@@ -22,6 +22,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 SherpaWeight::SherpaWeight()
+    : m_upSherpa( new SHERPA::Sherpa )
 {
 }
 
@@ -31,34 +32,17 @@ SherpaWeight::~SherpaWeight() throw()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::Initialize( const std::vector<const char *> & argv )
+void SherpaWeight::Initialize( const std::string & eventFileName, const std::vector<const char *> & argv )
 {
-    m_argv = argv;
-    m_argv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
-
-    //////
-
-#if 0
-    {
-        SHERPA::Sherpa bob;
-        
-        if (!bob.InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
-        {
-            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-            throw int(-2);  // TODO
-        }
-
-        if (!bob.InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
-        {
-            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-            throw int(-2);  // TODO
-        }
-    }
-#endif
-
-    SHERPA::Sherpa sherpa;
+    m_eventFileName = eventFileName;
     
-    if (!sherpa.InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
+    //m_argv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
+
+    // TODO: check if already initialized
+    
+    // initialize sherpa
+
+    if (!m_upSherpa->InitializeTheRun( static_cast<int>(argv.size()), const_cast<char **>(argv.data()) ))
     {
         LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
         throw int(-2);  // TODO
@@ -66,7 +50,7 @@ void SherpaWeight::Initialize( const std::vector<const char *> & argv )
     
     // get the various configuration paths and file names
     
-    SHERPA::Initialization_Handler * pInitHandler = sherpa.GetInitHandler();
+    SHERPA::Initialization_Handler * pInitHandler = m_upSherpa->GetInitHandler();
     if (!pInitHandler)
         throw int(-2); // TODO
     
@@ -153,16 +137,9 @@ void SherpaWeight::Initialize( const std::vector<const char *> & argv )
         // TODO:: ensure all names are unique
     }
     
-    Int_t nParam = (Int_t)m_parameters.size();
-    if (m_parameters.size())
+    if (NParameters())
     {
-        TMatrixD evalMatrix, invMatrix;
-        GetBilinearMatrices( m_parameters, evalMatrix, invMatrix );
-        
-        if (evalMatrix.GetNcols() != nParam)
-            throw -3; // TODO
-        
-        m_nEvaluations = evalMatrix.GetNrows();
+        GetBilinearMatrices( m_parameters, m_evalMatrix, m_invCoefMatrix, m_coefNames );
         
         // create list of param_card files
         
@@ -175,20 +152,16 @@ void SherpaWeight::Initialize( const std::vector<const char *> & argv )
             system( command.c_str() );
         }
 
-        for (Int_t i = 0; i < m_nEvaluations; ++i)
+        for (size_t i = 0; i < m_evalMatrix.size(); ++i)
         {
-            // copy param values from TMatrixTRow<Double_t> to std::vector<double>
-            std::vector<double> paramValues( nParam );
-            std::copy_n( evalMatrix[i].GetPtr(), nParam, paramValues.begin() );
-
             // construct destination file path
             char dstFile[40];
-            sprintf( dstFile, "param_card_%03i.dat", FMT_I(i) );  // %i is max 10 chars
+            sprintf( dstFile, "param_card_%03u.dat", FMT_U(i) );  // %i is max 10 chars
             
             std::string dstFilePath( dstPath + dstFile );
 
             // create param_card with new parameter values
-            CreateParamCard( srcFilePath, dstFilePath, m_parameters, paramValues );
+            CreateFeynRulesParamCard( srcFilePath, dstFilePath, m_parameters, m_evalMatrix[i] );
 
             m_paramCards.push_back( dstFilePath );
         }
@@ -196,252 +169,158 @@ void SherpaWeight::Initialize( const std::vector<const char *> & argv )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::ProcessEvent( int32_t eventId, size_t nInParticles, const std::vector<int> & particleCodes, const ATOOLS::Vec4D_Vector & particleMomenta )
+void SherpaWeight::EvaluateEvents()
 {
-    if (!nInParticles || (nInParticles > particleCodes.size()))
-    {
-        throw int(-2);  // TODO
-    }
-    
-    if (particleCodes.size() != particleMomenta.size())
-    {
-        throw int(-2);  // TODO
-    }
-    
-    if (m_paramCards.size() != m_nEvaluations)
-    {
-        throw int(-2);  // TODO
-    }
-    
-    for (size_t run = 0; run < m_nEvaluations; ++run)
-    {
-        //std::string                 argParamCard( "FR_PARAMCARD=" + m_paramCards[run] );
-        //std::vector<const char *>   runArgv(m_argv);
-        
-        //runArgv.push_back(argParamCard.c_str());
+    //std::string                 argParamCard( "FR_PARAMCARD=" + m_paramCards[run] );
+    //std::vector<const char *>   runArgv(m_argv);
 
-        SHERPA::Sherpa sherpa;
-        
-        if (!sherpa.InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
-        {
-            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-            throw int(-2);  // TODO
-        }
-        
-        SherpaMECalculator meCalc( &sherpa );
-
-        for (size_t i = 0; i < particleCodes.size(); ++i)
-        {
-            if (i < nInParticles)
-                meCalc.AddInFlav( particleCodes[i] );
-            else
-                meCalc.AddOutFlav( particleCodes[i] );
-        }
-
-        try
-        {
-            meCalc.Initialize();
-        }
-        catch (const ATOOLS::Exception & error)
-        {
-            LogMsgError( "Sherpa exception caught: \"%hs\" in %hs::%hs",
-                FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
-            
-            LogMsgInfo( "Sherpa process name: \"%hs\"", FMT_HS(meCalc.Name().c_str()) );
-            
-            const ATOOLS::Cluster_Amplitude * pAmp = meCalc.GetAmp();
-            if (!pAmp)
-                LogMsgInfo("Sherpa process cluster amplitude: null");
-            else
-            {
-                //const ATOOLS::ClusterLeg_Vector & legs = pAmp->Legs();
-                //int bob = 5;
-            }
-
-            throw;
-        }
-
-        meCalc.SetMomenta( particleMomenta );
-        
-        double me = meCalc.MatrixElement();
-        LogMsgInfo( "Event %i: ME=%E", FMT_I(eventId), FMT_F(me) );
-
-    #if 0
-        {
-            MODEL::ScalarConstantsMap * pConstants = meCalc.GetModelScalarConstants();
-            if (pConstants)
-            {
-                /**/
-                for (const auto & entry : *pConstants)
-                {
-                    std::cout << entry.first << ": " << entry.second << std::endl;
-                }
-                /**/
-                
-                double aEWM1 = 227.9;
-                
-                MODEL::ScalarConstantsMap::iterator itrFind = pConstants->find( "aEWM1" );
-                if (itrFind != pConstants->end())
-                {
-                    MODEL::ScalarConstantsMap::value_type & constantPair = *itrFind;
-                    constantPair.second = aEWM1;
-                
-                    double sw = pConstants->at("sw");
-                    double cw = pConstants->at("cw");
-
-                    double aEW = pow(aEWM1,-1.);
-                    double ee = 2.*sqrt(aEW)*sqrt(M_PI);
-                    double gw = ee*pow(sw,-1.);
-                    double g1 = ee*pow(cw,-1.);
-
-                    pConstants->at("aEW") = aEW;
-                    pConstants->at("ee")  = ee;
-                    pConstants->at("gw")  = gw;
-                    pConstants->at("g1")  = g1;
-                    
-                }
-
-                /**/
-                std::cout << "------------" << std::endl;
-                for (const auto & entry : *pConstants)
-                {
-                    std::cout << entry.first << ": " << entry.second << std::endl;
-                }
-                /**/
-            }
-        }
-        
-        double me2 = meCalc.MatrixElement();
-        LogMsgInfo( "Event %i: ME2=%E", FMT_I(eventId), FMT_F(me2) );
-    #endif
-    }
+    // TODO: implement this method
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::GetBilinearMatrices( const std::vector<ReweightParameter> & parameters, TMatrixD & evalMatrix, TMatrixD & invCoefMatrix )  // static
+void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
+                                        DoubleMatrix & evalMatrix,
+                                        DoubleMatrix & invCoefMatrix,
+                                        StringVector & coefNames )  // static
 {
     // clear outputs
-    evalMatrix    .Clear();
-    invCoefMatrix .Clear();
-    
-    Int_t nParam = (Int_t)parameters.size();
+    evalMatrix    .clear();
+    invCoefMatrix .clear();
+    coefNames     .clear();
+
+    size_t nParam = parameters.size();
     if (nParam < 1)
         return;
 
-    Int_t nCoefs = (nParam + 1) * (nParam + 2) / 2;  // nCoefs >= 3 [nCoefs = 3,6,10,15,...]
+    size_t nCoefs = (nParam + 1) * (nParam + 2) / 2;  // nCoefs >= 3 [nCoefs = 3,6,10,15,...]
 
-    // evalMatrix  rows: nCoefs   columns: nParam
-    // invmatrix   rows: nCoefs   columns: nCoefs
+    // eval matrix  rows: nCoefs   columns: nParam
+    // coef matrix  rows: nCoefs   columns: nCoefs
+    double eval[nCoefs][nParam];
+    double coef[nCoefs][nCoefs];
+    
+    memset( eval, 0, sizeof(eval) );    // zero all elements
+    memset( coef, 0, sizeof(coef) );    // zero all elements
 
-    //// fill in evalMatrix
+    //// fill in eval matrix
     {
-        evalMatrix.ResizeTo( nCoefs, nParam );     // new elements are zeroed
-
-        // zero all elements (just in case)
-        evalMatrix = 0.0;
+        // eval[0] = [0,...,0]
         
-        // evalMatrix[0] = [0,...,0]
-        
-        // evalMatrix[1..nParam] = diagonal of 1's
-        for (Int_t i = 0; i < nParam; ++i)
+        // eval[1..nParam] = diagonal of 1's
+        for (size_t i = 0; i < nParam; ++i)
         {
-            evalMatrix[i+1][i] = 1.0;
+            eval[i+1][i] = 1.0;
         }
 
-        // evalMatrix[nParam+1..2*nParam] = diagonal of -1's
-        for (Int_t i = 0; i < nParam; ++i)
+        // eval[nParam+1..2*nParam] = diagonal of -1's
+        for (size_t i = 0; i < nParam; ++i)
         {
-            evalMatrix[i+1+nParam][i] = -1.0;
+            eval[i+1+nParam][i] = -1.0;
         }
         
         // remainder with rotations of [1,-1,0,...], [1,0,-1,0,...], ...
-        for (Int_t r = 2 * nParam + 1, g = 1; r < nCoefs; )
+        for (size_t r = 2 * nParam + 1, g = 1; r < nCoefs; )
         {
-            Double_t row[nParam];
-
-            memset( row, 0, sizeof(row) );
+            double row[nParam];
+            
+            memset( row, 0, sizeof(row) );  // zero all elements
             
             row[0]   =  1.0;
             row[g++] = -1.0;
             
-            for (Int_t i = 0; (i < nParam) && (r < nCoefs); ++i)
+            for (size_t i = 0; (i < nParam) && (r < nCoefs); ++i)
             {
-                evalMatrix[r++] = TVectorD( nParam, row );
-
+                memcpy( eval[r++], row, sizeof(row) );
                 std::rotate( row, row + nParam - 1, row + nParam );
             }
         }
         
         // multiply with scale and add offset
         
-        for (Int_t r = 0; r < nCoefs; ++r)
+        for (size_t r = 0; r < nCoefs; ++r)
         {
-            for (Int_t c = 0; c < nParam; ++c)
+            for (size_t c = 0; c < nParam; ++c)
             {
                 const ReweightParameter & param = parameters[c];
-                Double_t &                entry = evalMatrix[r][c];
+                double &                  entry = eval[r][c];
 
                 entry = entry * param.scale + param.offset;
             }
         }
     }
 
+    // fill in coef matrix
     {
-        Double_t Mvector[nCoefs][nCoefs];
-
         // filling of Mvector
-        Int_t k;
-        for (Int_t r = 0; r < nCoefs; ++r)
+        size_t k;
+        for (size_t r = 0; r < nCoefs; ++r)
         {
-            Mvector[r][0] = 1.0;
+            coef[r][0] = 1.0;
             k = 1 + nParam;
 
-            for (Int_t c = 0; c < nParam; ++c)
+            for (size_t c = 0; c < nParam; ++c)
             {
-                Double_t value   = evalMatrix[r][c];
-                Double_t sqValue = value * value;
+                double value   = eval[r][c];
+                double sqValue = value * value;
 
-                Mvector[r][c + 1] = value;          // single terms
-                Mvector[r][k]     = sqValue;        // square terms
+                coef[r][c + 1] = value;     // single terms
+                coef[r][k]     = sqValue;   // square terms
                 
                 k += nParam - c;
             }
 
             // interference terms
             k = 1 + nParam;
-            for (Int_t c = 0; c < nParam - 1; ++c)
+            for (size_t c = 0; c < nParam - 1; ++c)
             {
-                for (Int_t j = c + 1; j < nParam; ++j)
+                for (size_t j = c + 1; j < nParam; ++j)
                 {
-                    Double_t value = evalMatrix[r][c] * evalMatrix[r][j];
+                    double value = eval[r][c] * eval[r][j];
                 
-                    Mvector[r][k + j - c] = value;
+                    coef[r][k + j - c] = value;
                 }
 
                 k += nParam - c;
             }
         }
+    }
+    
+    // invert coefficient matrix
+    {
+        TMatrixD matrix( (Int_t)nCoefs, (Int_t)nCoefs, static_cast<const Double_t *>( coef[0] ) );
+        matrix.Invert();
         
-        invCoefMatrix.ResizeTo( nCoefs, nCoefs  );     // new elements are zeroed
-        invCoefMatrix.SetMatrixArray( Mvector[0] );
-        invCoefMatrix.Invert();
-        
+        /*
         // get rid of numerical precision residuals
-        for (Int_t i = 0; i < nCoefs; ++i)
+        for (size_t i = 0; i < nCoefs; ++i)
         {
-            for (Int_t j = 0; j < nCoefs; ++j)
+            for (size_t j = 0; j < nCoefs; ++j)
             {
-                if (abs(invCoefMatrix[i][j]) < 1.0E-10)
-                    invCoefMatrix[i][j] = 0.0;
+                if (abs(matrix[i][j]) < 1.0E-10)
+                    matrix[i][j] = 0.0;
             }
+        }
+        */
+        
+        memcpy( coef[0], matrix.GetMatrixArray(), sizeof(coef) );
+    }
+
+    // fill in output matrices
+    {
+        evalMatrix   .resize( nCoefs );
+        invCoefMatrix.resize( nCoefs );
+
+        for (size_t r = 0; r < nCoefs; ++r)
+        {
+            evalMatrix   [r].assign( eval[r], eval[r] + nParam );
+            invCoefMatrix[r].assign( coef[r], coef[r] + nCoefs );
         }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::CreateParamCard( const std::string & srcFilePath, const std::string & dstFilePath,
-                                    const std::vector<ReweightParameter> & parameters,
-                                    const std::vector<double> & paramValues )    // static
+void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, const std::string & dstFilePath,
+                                             const ParameterVector & parameters, const DoubleVector & paramValues )    // static
 {
     struct Local  // local object for automated cleanup
     {
