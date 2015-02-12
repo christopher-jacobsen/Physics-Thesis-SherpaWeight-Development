@@ -1,9 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//  SherpaWeightMain.h
+//  SherpaWeightProgram.h
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SHERPAWEIGHTMAIN_H
-#define SHERPAWEIGHTMAIN_H
+#ifndef SHERPA_WEIGHT_PROGRAM_H
+#define SHERPA_WEIGHT_PROGRAM_H
 
 #include "common.h"
 
@@ -15,7 +15,7 @@ class  SherpaWeight;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class SherpaWeightMain
+class SherpaWeightProgram
 {
 public:
     struct RunParameters
@@ -27,8 +27,8 @@ public:
     };
 
 public:
-    SherpaWeightMain();
-    ~SherpaWeightMain() throw();
+    SherpaWeightProgram();
+    ~SherpaWeightProgram() throw();
     
     int ParseCommandLine( int argc, const char * argv[], RunParameters & param );
     
@@ -41,8 +41,8 @@ private:
     std::unique_ptr<SherpaWeight> m_upSherpaWeight;
 
 private:
-    SherpaWeightMain(const SherpaWeightMain &) = delete;
-    SherpaWeightMain & operator=(const SherpaWeightMain &) = delete;
+    SherpaWeightProgram(const SherpaWeightProgram &) = delete;
+    SherpaWeightProgram & operator=(const SherpaWeightProgram &) = delete;
 };
 
-#endif // SHERPAWEIGHTMAIN_H
+#endif // SHERPA_WEIGHT_PROGRAM_H

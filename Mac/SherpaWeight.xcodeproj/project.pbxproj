@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		230EC6E41A77A16800DC49D3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E11A77A16800DC49D3 /* main.cpp */; };
-		230EC6E51A77A16800DC49D3 /* SherpaWeightMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SherpaWeightMain.cpp */; };
+		230EC6E51A77A16800DC49D3 /* SherpaWeightProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SherpaWeightProgram.cpp */; };
 		230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */; };
 		23695DDA1A8CDC3F0083BFAA /* SherpaMEProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DD81A8CDC3F0083BFAA /* SherpaMEProgram.cpp */; };
 		23695DDB1A8CE0DC0083BFAA /* SherpaMECalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232B88701A78C448009534D6 /* SherpaMECalculator.cpp */; };
@@ -44,8 +44,8 @@
 		230EC6D31A77A10F00DC49D3 /* SherpaWeight */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SherpaWeight; sourceTree = BUILT_PRODUCTS_DIR; };
 		230EC6E01A77A16800DC49D3 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../Source/Common/common.h; sourceTree = SOURCE_ROOT; };
 		230EC6E11A77A16800DC49D3 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../Source/SherpaWeight/main.cpp; sourceTree = SOURCE_ROOT; };
-		230EC6E21A77A16800DC49D3 /* SherpaWeightMain.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeightMain.cpp; path = ../Source/SherpaWeight/SherpaWeightMain.cpp; sourceTree = SOURCE_ROOT; };
-		230EC6E31A77A16800DC49D3 /* SherpaWeightMain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeightMain.h; path = ../Source/SherpaWeight/SherpaWeightMain.h; sourceTree = SOURCE_ROOT; };
+		230EC6E21A77A16800DC49D3 /* SherpaWeightProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeightProgram.cpp; path = ../Source/SherpaWeight/SherpaWeightProgram.cpp; sourceTree = SOURCE_ROOT; };
+		230EC6E31A77A16800DC49D3 /* SherpaWeightProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeightProgram.h; path = ../Source/SherpaWeight/SherpaWeightProgram.h; sourceTree = SOURCE_ROOT; };
 		230EC6E61A77BE6600DC49D3 /* SherpaRootEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SherpaRootEvent.h; path = ../Source/Common/SherpaRootEvent.h; sourceTree = SOURCE_ROOT; };
 		230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaRootEvent.cpp; path = ../Source/Common/SherpaRootEvent.cpp; sourceTree = SOURCE_ROOT; };
 		232B886E1A784AEB009534D6 /* test.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = test.cpp; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/Examples/API/ME2-CPP/test.cpp"; sourceTree = SOURCE_ROOT; };
@@ -120,8 +120,8 @@
 		230EC6DF1A77A15A00DC49D3 /* SherpaWeight */ = {
 			isa = PBXGroup;
 			children = (
-				230EC6E31A77A16800DC49D3 /* SherpaWeightMain.h */,
-				230EC6E21A77A16800DC49D3 /* SherpaWeightMain.cpp */,
+				230EC6E31A77A16800DC49D3 /* SherpaWeightProgram.h */,
+				230EC6E21A77A16800DC49D3 /* SherpaWeightProgram.cpp */,
 				238522FB1A8A419300CE0D2D /* SherpaWeight.h */,
 				238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */,
 				230EC6E11A77A16800DC49D3 /* main.cpp */,
@@ -281,7 +281,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */,
-				230EC6E51A77A16800DC49D3 /* SherpaWeightMain.cpp in Sources */,
+				230EC6E51A77A16800DC49D3 /* SherpaWeightProgram.cpp in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
 				230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */,
 				23695DDF1A8CE8180083BFAA /* MERootEvent.cpp in Sources */,

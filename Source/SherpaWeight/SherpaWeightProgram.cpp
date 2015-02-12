@@ -1,8 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//  SherpaWeightMain.cpp
+//  SherpaWeightProgram.cpp
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "SherpaWeightMain.h"
+#include "SherpaWeightProgram.h"
 #include "SherpaWeight.h"
 #include "SherpaRootEvent.h"
 
@@ -22,18 +22,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-SherpaWeightMain::SherpaWeightMain()
+SherpaWeightProgram::SherpaWeightProgram()
     : m_upSherpaWeight( new SherpaWeight )
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-SherpaWeightMain::~SherpaWeightMain() throw()
+SherpaWeightProgram::~SherpaWeightProgram() throw()
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int SherpaWeightMain::ParseCommandLine( int argc, const char * argv[], RunParameters & param )
+int SherpaWeightProgram::ParseCommandLine( int argc, const char * argv[], RunParameters & param )
 {
     param = RunParameters();  // clear all values in case of error
 
@@ -65,7 +65,7 @@ int SherpaWeightMain::ParseCommandLine( int argc, const char * argv[], RunParame
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-int SherpaWeightMain::Run( const RunParameters & param )
+int SherpaWeightProgram::Run( const RunParameters & param )
 {
     try
     {
@@ -93,7 +93,7 @@ int SherpaWeightMain::Run( const RunParameters & param )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeightMain::SaveCoefficients( const RunParameters & param )
+void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
 {
     // open input file
 
