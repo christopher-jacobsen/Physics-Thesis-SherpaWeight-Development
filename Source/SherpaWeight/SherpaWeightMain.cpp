@@ -37,7 +37,7 @@ int SherpaWeightMain::ParseCommandLine( int argc, const char * argv[], RunParame
 {
     param = RunParameters();  // clear all values in case of error
 
-    if (argc != 3)
+    if (argc < 3)
         goto USAGE;
     
     param.argv.push_back( argv[0] );
@@ -54,10 +54,13 @@ int SherpaWeightMain::ParseCommandLine( int argc, const char * argv[], RunParame
         return -1;
     }
     
+    for (int a = 3; a < argc; ++a)
+        param.argv.push_back( argv[a] );
+
     return 0;
 
  USAGE:
-    LogMsgInfo("Usage: SherpaWeight input_root_file output_root_file");
+    LogMsgInfo("Usage: SherpaWeight input_root_file output_root_file <sherpa_arguments ...>");
     return -1;
 }
 
