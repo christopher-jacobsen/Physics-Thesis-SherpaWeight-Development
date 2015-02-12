@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <memory>
 #include <type_traits>
+#include <stdexcept>
+#include <system_error>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // message output methods
@@ -65,6 +67,27 @@ inline void LogMsgError( const char * format, ... ) throw()
     va_start(args, format);
     LogMsg( "Error: ", format, args, stderr );
     va_end(args);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// exception helpers
+
+[[noreturn]] inline void ThrowError( const char * what )
+{
+    LogMsgError(what);
+    throw std::runtime_error( what );
+}
+
+[[noreturn]] inline void ThrowError( std::errc code, const char * what )
+{
+    LogMsgError(what);
+    throw std::system_error( make_error_code(code), what );
+}
+
+[[noreturn]] inline void ThrowError( const std::exception & error )
+{
+    LogMsgError(error.what());
+    throw error;
 }
 
 /////////////////////////////////////////////////////////////////////////////
