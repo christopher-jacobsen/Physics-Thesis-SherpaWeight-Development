@@ -10,7 +10,11 @@
 		230EC6E41A77A16800DC49D3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E11A77A16800DC49D3 /* main.cpp */; };
 		230EC6E51A77A16800DC49D3 /* SherpaWeightMain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E21A77A16800DC49D3 /* SherpaWeightMain.cpp */; };
 		230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */; };
-		232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232B88701A78C448009534D6 /* SherpaMECalculator.cpp */; };
+		23695DDA1A8CDC3F0083BFAA /* SherpaMEProgram.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DD81A8CDC3F0083BFAA /* SherpaMEProgram.cpp */; };
+		23695DDB1A8CE0DC0083BFAA /* SherpaMECalculator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 232B88701A78C448009534D6 /* SherpaMECalculator.cpp */; };
+		23695DDC1A8CE2460083BFAA /* SherpaRootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */; };
+		23695DDF1A8CE8180083BFAA /* MERootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */; };
+		23695DE01A8CE8180083BFAA /* MERootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */; };
 		238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */; };
 		23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23AC9D8E1A8CCD5100BD70A3 /* main.cpp */; };
 /* End PBXBuildFile section */
@@ -48,6 +52,10 @@
 		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = SOURCE_ROOT; };
 		232B88701A78C448009534D6 /* SherpaMECalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMECalculator.cpp; path = ../Source/SherpaME/SherpaMECalculator.cpp; sourceTree = SOURCE_ROOT; };
 		232B88711A78C448009534D6 /* SherpaMECalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMECalculator.h; path = ../Source/SherpaME/SherpaMECalculator.h; sourceTree = SOURCE_ROOT; };
+		23695DD81A8CDC3F0083BFAA /* SherpaMEProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMEProgram.cpp; path = ../Source/SherpaME/SherpaMEProgram.cpp; sourceTree = SOURCE_ROOT; };
+		23695DD91A8CDC3F0083BFAA /* SherpaMEProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMEProgram.h; path = ../Source/SherpaME/SherpaMEProgram.h; sourceTree = SOURCE_ROOT; };
+		23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MERootEvent.cpp; sourceTree = "<group>"; };
+		23695DDE1A8CE8180083BFAA /* MERootEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MERootEvent.h; sourceTree = "<group>"; };
 		238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeight.cpp; path = ../Source/SherpaWeight/SherpaWeight.cpp; sourceTree = SOURCE_ROOT; };
 		238522FB1A8A419300CE0D2D /* SherpaWeight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeight.h; path = ../Source/SherpaWeight/SherpaWeight.h; sourceTree = SOURCE_ROOT; };
 		238522FD1A8A592900CE0D2D /* FeynRules_Model.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FeynRules_Model.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Main/FeynRules_Model.C"; sourceTree = SOURCE_ROOT; };
@@ -135,9 +143,6 @@
 			isa = PBXGroup;
 			children = (
 				23AC9D951A8CCDC100BD70A3 /* Common */,
-				230EC6E01A77A16800DC49D3 /* common.h */,
-				230EC6E61A77BE6600DC49D3 /* SherpaRootEvent.h */,
-				230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */,
 				230EC6DF1A77A15A00DC49D3 /* SherpaWeight */,
 				23AC9D8D1A8CCD5100BD70A3 /* SherpaME */,
 			);
@@ -183,6 +188,8 @@
 		23AC9D8D1A8CCD5100BD70A3 /* SherpaME */ = {
 			isa = PBXGroup;
 			children = (
+				23695DD91A8CDC3F0083BFAA /* SherpaMEProgram.h */,
+				23695DD81A8CDC3F0083BFAA /* SherpaMEProgram.cpp */,
 				232B88711A78C448009534D6 /* SherpaMECalculator.h */,
 				232B88701A78C448009534D6 /* SherpaMECalculator.cpp */,
 				23AC9D8E1A8CCD5100BD70A3 /* main.cpp */,
@@ -194,6 +201,11 @@
 		23AC9D951A8CCDC100BD70A3 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				230EC6E01A77A16800DC49D3 /* common.h */,
+				230EC6E61A77BE6600DC49D3 /* SherpaRootEvent.h */,
+				230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */,
+				23695DDE1A8CE8180083BFAA /* MERootEvent.h */,
+				23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */,
 			);
 			name = Common;
 			path = ../Source/Common;
@@ -271,8 +283,8 @@
 				238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */,
 				230EC6E51A77A16800DC49D3 /* SherpaWeightMain.cpp in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
-				232B88721A78C448009534D6 /* SherpaMECalculator.cpp in Sources */,
 				230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */,
+				23695DDF1A8CE8180083BFAA /* MERootEvent.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -280,7 +292,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23695DDB1A8CE0DC0083BFAA /* SherpaMECalculator.cpp in Sources */,
+				23695DDC1A8CE2460083BFAA /* SherpaRootEvent.cpp in Sources */,
 				23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */,
+				23695DDA1A8CDC3F0083BFAA /* SherpaMEProgram.cpp in Sources */,
+				23695DE01A8CE8180083BFAA /* MERootEvent.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
