@@ -40,6 +40,22 @@
 		232B88711A78C448009534D6 /* SherpaMECalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMECalculator.h; path = ../SherpaMECalculator.h; sourceTree = "<group>"; };
 		238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeight.cpp; path = ../SherpaWeight.cpp; sourceTree = "<group>"; };
 		238522FB1A8A419300CE0D2D /* SherpaWeight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeight.h; path = ../SherpaWeight.h; sourceTree = "<group>"; };
+		238522FD1A8A592900CE0D2D /* FeynRules_Model.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FeynRules_Model.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Main/FeynRules_Model.C"; sourceTree = "<group>"; };
+		238522FE1A8A592900CE0D2D /* FeynRules_Model.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = FeynRules_Model.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Main/FeynRules_Model.H"; sourceTree = "<group>"; };
+		238522FF1A8A592900CE0D2D /* FeynRules_Spectrum.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FeynRules_Spectrum.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Main/FeynRules_Spectrum.C"; sourceTree = "<group>"; };
+		238523001A8A592900CE0D2D /* FeynRules_Spectrum.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = FeynRules_Spectrum.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Main/FeynRules_Spectrum.H"; sourceTree = "<group>"; };
+		238523031A8A594C00CE0D2D /* Interaction_Model_FeynRules.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Interaction_Model_FeynRules.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Interaction_Models/Interaction_Model_FeynRules.C"; sourceTree = "<group>"; };
+		238523041A8A594C00CE0D2D /* Interaction_Model_FeynRules.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Interaction_Model_FeynRules.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Interaction_Models/Interaction_Model_FeynRules.H"; sourceTree = "<group>"; };
+		238523081A8A9EE100CE0D2D /* AfterBurner.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AfterBurner.cxx; path = ../../../../beck/AfterBurner/AfterBurner.cxx; sourceTree = "<group>"; };
+		238523091A8A9EE100CE0D2D /* Compare.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Compare.cxx; path = ../../../../beck/AfterBurner/Compare.cxx; sourceTree = "<group>"; };
+		2385230A1A8A9EE100CE0D2D /* D3PD_event.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = D3PD_event.cxx; path = ../../../../beck/AfterBurner/D3PD_event.cxx; sourceTree = "<group>"; };
+		2385230B1A8A9EE100CE0D2D /* D3PD_event.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = D3PD_event.h; path = ../../../../beck/AfterBurner/D3PD_event.h; sourceTree = "<group>"; };
+		2385230C1A8A9EE100CE0D2D /* DiBosonWeight.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DiBosonWeight.cxx; path = ../../../../beck/AfterBurner/DiBosonWeight.cxx; sourceTree = "<group>"; };
+		2385230D1A8A9EE100CE0D2D /* DiBosonWeight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = DiBosonWeight.h; path = ../../../../beck/AfterBurner/DiBosonWeight.h; sourceTree = "<group>"; };
+		2385230E1A8A9EE100CE0D2D /* InputEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = InputEvent.h; path = ../../../../beck/AfterBurner/InputEvent.h; sourceTree = "<group>"; };
+		2385230F1A8A9EE100CE0D2D /* MakeDist.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MakeDist.cxx; path = ../../../../beck/AfterBurner/MakeDist.cxx; sourceTree = "<group>"; };
+		238523101A8A9EE100CE0D2D /* SherpaEvent.cxx */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaEvent.cxx; path = ../../../../beck/AfterBurner/SherpaEvent.cxx; sourceTree = "<group>"; };
+		238523111A8A9EE100CE0D2D /* SherpaEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SherpaEvent.h; path = ../../../../beck/AfterBurner/SherpaEvent.h; sourceTree = "<group>"; };
 		23E1FC1A1A8A3BF600CA3DFF /* MEProcess.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = "<group>"; };
 		23E1FC1B1A8A3BF600CA3DFF /* MEProcess.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MEProcess.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.H"; sourceTree = "<group>"; };
 		23E1FC1C1A8A3BF600CA3DFF /* MEProcess.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = "<group>"; };
@@ -93,13 +109,45 @@
 		232B886A1A782BF9009534D6 /* Other Files */ = {
 			isa = PBXGroup;
 			children = (
+				238523071A8A9EAF00CE0D2D /* Afterburner */,
+				238523061A8A9E9A00CE0D2D /* Sherpa */,
+			);
+			name = "Other Files";
+			sourceTree = "<group>";
+		};
+		238523061A8A9E9A00CE0D2D /* Sherpa */ = {
+			isa = PBXGroup;
+			children = (
 				232B886F1A784EBF009534D6 /* test.py.in */,
 				232B886E1A784AEB009534D6 /* test.cpp */,
 				23E1FC1A1A8A3BF600CA3DFF /* MEProcess.C */,
 				23E1FC1B1A8A3BF600CA3DFF /* MEProcess.H */,
 				23E1FC1C1A8A3BF600CA3DFF /* MEProcess.i */,
+				238522FD1A8A592900CE0D2D /* FeynRules_Model.C */,
+				238522FE1A8A592900CE0D2D /* FeynRules_Model.H */,
+				238522FF1A8A592900CE0D2D /* FeynRules_Spectrum.C */,
+				238523001A8A592900CE0D2D /* FeynRules_Spectrum.H */,
+				238523031A8A594C00CE0D2D /* Interaction_Model_FeynRules.C */,
+				238523041A8A594C00CE0D2D /* Interaction_Model_FeynRules.H */,
 			);
-			name = "Other Files";
+			name = Sherpa;
+			sourceTree = "<group>";
+		};
+		238523071A8A9EAF00CE0D2D /* Afterburner */ = {
+			isa = PBXGroup;
+			children = (
+				238523081A8A9EE100CE0D2D /* AfterBurner.cxx */,
+				238523091A8A9EE100CE0D2D /* Compare.cxx */,
+				2385230A1A8A9EE100CE0D2D /* D3PD_event.cxx */,
+				2385230B1A8A9EE100CE0D2D /* D3PD_event.h */,
+				2385230C1A8A9EE100CE0D2D /* DiBosonWeight.cxx */,
+				2385230D1A8A9EE100CE0D2D /* DiBosonWeight.h */,
+				2385230E1A8A9EE100CE0D2D /* InputEvent.h */,
+				2385230F1A8A9EE100CE0D2D /* MakeDist.cxx */,
+				238523101A8A9EE100CE0D2D /* SherpaEvent.cxx */,
+				238523111A8A9EE100CE0D2D /* SherpaEvent.h */,
+			);
+			name = Afterburner;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
