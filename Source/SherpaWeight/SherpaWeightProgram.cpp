@@ -77,19 +77,15 @@ int SherpaWeightProgram::Run( const RunParameters & param )
         
         SaveCoefficients( param );
 
-        return 0;
+        return EXIT_SUCCESS;
     }
     catch (const ATOOLS::Exception & error)
     {
         LogMsgError( "Sherpa Exception: %hs\n\t[Source %hs::%hs]",
                      FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
     }
-    catch (const std::exception & error)
-    {
-        LogMsgError( "Exception: %hs", FMT_HS(error.what()) );
-    }
 
-    return -1;
+    return EXIT_FAILURE;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

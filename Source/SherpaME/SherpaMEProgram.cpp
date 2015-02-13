@@ -169,14 +169,15 @@ int SherpaMEProgram::Run( const RunParameters & param )
         upOutputFile->Write( 0, TFile::kOverwrite );
         upOutputFile->Close();
 
-        return 0;
+        return EXIT_SUCCESS;
     }
     catch (const ATOOLS::Exception & error)
     {
-        LogMsgError( "Sherpa exception caught: \"%hs\" in %hs::%hs",
-            FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
-        return -3;
+        LogMsgError( "Sherpa Exception: %hs\n\t[Source %hs::%hs]",
+                    FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
     }
+    
+    return EXIT_FAILURE;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

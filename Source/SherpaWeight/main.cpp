@@ -1,15 +1,18 @@
-//
+////////////////////////////////////////////////////////////////////////////////////////////////////
 //  main.cpp
 //  SherpaWeight
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "common.h"
 #include "SherpaWeightProgram.h"
+#include "common.h"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, const char * argv[])
 {
     try
     {
-        int  result = 0;
+        int result = 0;
+
         SherpaWeightProgram SherpaWeight;
         
         SherpaWeightProgram::RunParameters param;
@@ -21,12 +24,12 @@ int main(int argc, const char * argv[])
     }
     catch (const std::exception & error)
     {
-        LogMsgError( "std exception caught in main(): \"%hs\"", FMT_HS(error.what()) );
-        return -3;
+        LogMsgError( "Exception: %hs", FMT_HS(error.what()) );
     }
     catch (...)
     {
-        LogMsgError("Unknown exception caught in main()");
-        return -3;
+        LogMsgError( "Unknown Exception!" );
     }
+
+    return EXIT_FAILURE;
 }
