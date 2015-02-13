@@ -152,6 +152,28 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
             ThrowError( std::errc::io_error, "Save of coefficients is incomplete." );
         }
         
+        {
+            SherpaWeight::DoubleVector coefs = m_upSherpaWeight->CoefficientValues( currentEvent.id );
+            if (coefs.empty())
+                LogMsgWarning( "No coefficients for entry %%li, event id %i", FMT_LLI(iEntry), FMT_I(currentEvent.id) );
+            else
+            {
+                LogMsgInfo( "Event %i coefficients:", FMT_I(currentEvent.id) );
+
+                const SherpaWeight::StringVector & names = m_upSherpaWeight->CoefficientNames();
+                size_t index = 0;
+                for (double value : coefs)
+                {
+                    const char * pName = (index < names.size()) ? names[index].c_str() : "Unknown";
+                    LogMsgInfo( "%-20hs:\t%.15E", FMT_HS(pName), FMT_F(value) );
+                    ++index;
+                }
+                
+                LogMsgInfo( "" );
+            }
+        }
+        
+        
         if (pOutputTree->Fill() < 0)
         {
             LogMsgError( "Fill failed on entry %lli", FMT_LLI(iEntry) );

@@ -4,17 +4,21 @@
 
 #include "SherpaWeight.h"
 #include "SherpaMECalculator.h"
+#include "MERootEvent.h"
+
+#include "common.h"
+
+#include <limits>
 
 // Sherpa includes
 #include <SHERPA/Main/Sherpa.H>
 #include <SHERPA/Initialization/Initialization_Handler.H>
 #include <ATOOLS/Org/Data_Reader.H>
-#include <ATOOLS/Math/Vector.H>
-//#include <ATOOLS/Phys/Cluster_Amplitude.H>
 
 // Root includes
+#include <TFile.h>
+#include <TTree.h>
 #include <TMatrixD.h>
-#include <TVectorD.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight
@@ -32,20 +36,29 @@ SherpaWeight::~SherpaWeight() throw()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::Initialize( const std::string & eventFileName, const std::vector<const char *> & argv )
+void SherpaWeight::Initialize( const std::string & eventFileName, const std::vector<const char *> & argv,
+                               bool bReadParameters /*= true*/ )
 {
-    m_eventFileName = eventFileName;
-    
-    //m_argv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
-
     // TODO: check if already initialized
     
-    // initialize sherpa
-
-    if (!m_upSherpa->InitializeTheRun( static_cast<int>(argv.size()), const_cast<char **>(argv.data()) ))
+    m_eventFileName = eventFileName;
+    m_argv          = argv;
+    
     {
-        LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-        throw int(-2);  // TODO
+        std::string application( argv[0] );
+        m_appRunPath = application.substr( 0, application.rfind("/") ) + "/";
+    }
+    
+    // initialize sherpa
+    {
+        //std::vector<const char *> runArgv(m_argv);
+        //runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
+        
+        if (!m_upSherpa->InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
+        {
+            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
+            throw int(-2);  // TODO
+        }
     }
     
     // get the various configuration paths and file names
@@ -54,127 +67,290 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
     if (!pInitHandler)
         throw int(-2); // TODO
     
-    std::string runPath  = pInitHandler->Path();
-    std::string runFile  = pInitHandler->File();
-    std::string baseFile = runFile.substr( 0, runFile.find("|") );  // strip off section declaration following '|'
+    m_sherpaRunPath = pInitHandler->Path();
+    m_sherpaRunFile = pInitHandler->File();
+
+    std::string runFileBase = m_sherpaRunFile.substr( 0, m_sherpaRunFile.find("|") );  // strip off section declaration following '|'
 
     // read the run file/section for optional SHERPA_WEIGHT_FILE definition
-    std::string weightFile, paramFile;
     {
         ATOOLS::Data_Reader reader(" ",";","!","=");
         reader.AddComment("#");
         reader.AddWordSeparator("\t");
-        reader.SetInputPath( runPath );
-        reader.SetInputFile( runFile );
+        reader.SetInputPath( m_sherpaRunPath );
+        reader.SetInputFile( m_sherpaRunFile );
         
         // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
       
-        weightFile = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", baseFile + "|(SherpaWeight){|}(SherpaWeight)" );
-        paramFile  = reader.GetValue<std::string>( "FR_PARAMCARD",       std::string("param_card.dat") );
+        m_sherpaWeightRunFile    = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", runFileBase + "|(SherpaWeight){|}(SherpaWeight)" );
+        m_feynRulesParamCardFile = reader.GetValue<std::string>( "FR_PARAMCARD",       std::string("param_card.dat") );
+        
+        // TODO: FR_PARAMCARD could include a section definition, in which case the code for copying FeynRules cards would no longer work
+        // TODO: When refactored to handle multiple models, then param card is feynrules specific, and should be moved to part of a model handler
     }
     
-    // read list of reweight parameters
+    // optionally read reweight parameters from file
+    
+    if (bReadParameters)
+        ReadParametersFromFile();
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
+{
+    ParameterVector params;
+    
+    ATOOLS::Data_Reader reader(" ",";","!","=");
+    reader.AddComment("#");
+    reader.AddWordSeparator("\t");
+    reader.SetInputPath( m_sherpaRunPath );
+    reader.SetInputFile( m_sherpaWeightRunFile );
+    
+    // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
+    reader.SetAddCommandLine(false);  // read the raw file input
+    
+    std::vector< std::vector<std::string> > stringMatrix;
+    if (reader.MatrixFromFile( stringMatrix ))
     {
-        ATOOLS::Data_Reader reader(" ",";","!","=");
-        reader.AddComment("#");
-        reader.AddWordSeparator("\t");
-        reader.SetInputPath( runPath );
-        reader.SetInputFile( weightFile );
+        params.reserve( stringMatrix.size() );    // reserve space for all entries
         
-        // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
-        reader.SetAddCommandLine(false);  // read the raw file input
-
-        std::vector< std::vector<std::string> > stringMatrix;
-        if (reader.MatrixFromFile( stringMatrix ))
+        for ( const auto & row : stringMatrix )
         {
-            m_parameters.reserve( stringMatrix.size() );    // reserve space for all entries
+            if (!row.size())    // skip empty rows (probably not necessary, but just for caution sake)
+                continue;
             
-            for ( const auto & row : stringMatrix )
+            ReweightParameter param;
+            
+            param.name = row[0];
+            
+            if (row.size() > 1)
             {
-                if (!row.size())    // skip empty rows (probably not necessary, but just for caution sake)
-                    continue;
-            
-                ReweightParameter param;
-
-                param.name = row[0];
-                
-                if (row.size() > 1)
+                try
                 {
-                    try
+                    // could use ATOOLS::ToType<double>(), but that doesn't check if the conversion failed
+                    // use std::stringstream instead
+                    
+                    // TODO: try using std::stof
+                    
+                    std::stringstream stream;
+                    stream.precision(12);
+                    
+                    stream << row[1];
+                    stream >> param.scale;
+                    if (stream.fail() || !stream.eof())
+                        throw -2;  // TODO
+                    
+                    if (row.size() > 2)
                     {
-                        // could use ATOOLS::ToType<double>(), but that doesn't check if the conversion failed
-                        // use std::stringstream instead
-                    
-                        std::stringstream stream;
-                        stream.precision(12);
-                    
-                        stream << row[1];
-                        stream >> param.scale;
+                        stream.clear();
+                        stream << row[2];
+                        stream >> param.offset;
                         if (stream.fail() || !stream.eof())
                             throw -2;  // TODO
-                        
-                        if (row.size() > 2)
-                        {
-                            stream.clear();
-                            stream << row[2];
-                            stream >> param.offset;
-                            if (stream.fail() || !stream.eof())
-                                throw -2;  // TODO
-                        }
-                    }
-                    catch (const std::exception & error)
-                    {
-                        LogMsgError( "Failed to read scale/offset for reweight parameter %hs", FMT_HS(param.name.c_str()) );
-                        throw;
                     }
                 }
-                
-                m_parameters.push_back( std::move(param) );
+                catch (const std::exception & error)
+                {
+                    LogMsgError( "Failed to read scale/offset for reweight parameter %hs", FMT_HS(param.name.c_str()) );
+                    throw;
+                }
             }
+            
+            params.push_back( std::move(param) );
         }
-        
-        // TODO:: ensure all names are unique
     }
     
-    if (NParameters())
-    {
-        GetBilinearMatrices( m_parameters, m_evalMatrix, m_invCoefMatrix, m_coefNames );
-        
-        // create list of param_card files
-        
-        std::string srcFilePath = runPath + paramFile;
-        std::string dstPath     = runPath + "SherpaWeight/";
+    SetParameters( params );
+}
 
-        // create destination param_card directory
-        {
-            std::string command = "mkdir \"" + dstPath + "\"";
-            system( command.c_str() );
-        }
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::SetParameters( const ParameterVector & params )
+{
+    // TODO:: ensure all names are unique
+    
+    m_parameters = params;
+    
+    // calculate bilinear matrices
+    
+    GetBilinearMatrices( m_parameters, m_evalMatrix, m_invCoefMatrix, m_coefNames );
 
-        for (size_t i = 0; i < m_evalMatrix.size(); ++i)
-        {
-            // construct destination file path
-            char dstFile[40];
-            sprintf( dstFile, "param_card_%03u.dat", FMT_U(i) );  // %i is max 10 chars
-            
-            std::string dstFilePath( dstPath + dstFile );
-
-            // create param_card with new parameter values
-            CreateFeynRulesParamCard( srcFilePath, dstFilePath, m_parameters, m_evalMatrix[i] );
-
-            m_paramCards.push_back( dstFilePath );
-        }
-    }
+    m_matrixElements.clear();  // cleanup any previous run
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void SherpaWeight::EvaluateEvents()
 {
-    //std::string                 argParamCard( "FR_PARAMCARD=" + m_paramCards[run] );
-    //std::vector<const char *>   runArgv(m_argv);
+    size_t nEvaluations = NEvaluations();
+    
+    m_matrixElements.clear();  // cleanup any previous run
 
-    // TODO: implement this method
+    if (nEvaluations == 0)
+        return;
+    
+    // determine and create temporary work directory
+    std::string tmpPath = m_sherpaRunPath + "SherpaWeight/";
+    {
+        std::string command = "mkdir \"" + tmpPath + "\"";
+        system( command.c_str() );
+    }
+
+    // create list of param_card files
+    {
+        std::string srcFilePath = m_sherpaRunPath + m_feynRulesParamCardFile;
+        
+        for (size_t i = 0; i < nEvaluations; ++i)
+        {
+            // construct destination file path
+            char dstFile[40];
+            sprintf( dstFile, "param_card_%03u.dat", FMT_U(i+1) );  // %i is max 10 chars
+            
+            std::string dstFilePath( tmpPath + dstFile );
+            
+            // create param_card with new parameter values
+            CreateFeynRulesParamCard( srcFilePath, dstFilePath, m_parameters, m_evalMatrix[i] );
+            
+            m_paramCards.push_back( std::move(dstFilePath) );
+        }
+    }
+
+    // run evaluations
+    
+    std::string outputFile( tmpPath + "SherpaME-tmp.root" );
+    std::string baseCommand( m_appRunPath + "SherpaME" );  // TODO: add argv[0] path to SherpaWeight not Sherpa run path
+    
+    baseCommand += " " + m_eventFileName;
+    baseCommand += " " + outputFile;
+
+    for (size_t i = 1; i < m_argv.size(); ++i)
+        baseCommand += std::string(" ") + m_argv[i];
+    
+    for (size_t run = 0; run < nEvaluations; ++run)
+    {
+        std::string command( baseCommand + " \"FR_PARAMCARD=" + m_paramCards[run] + "\"" );
+        
+        LogMsgInfo( "" );
+        LogMsgInfo( "+----------------------------------------------------------+");
+        LogMsgInfo( "|  Evaluation Run %u                                       |", FMT_U(run + 1) );
+        LogMsgInfo( "+----------------------------------------------------------+");
+        LogMsgInfo( "" );
+
+        LogMsgInfo( "Running command:" );
+        LogMsgInfo( "%hs\n", FMT_HS(command.c_str()) );
+
+        int result = system( command.c_str() );
+        if (result != 0)
+            ThrowError( "Evaluation failed." );
+        
+        AddMatrixElementsFromFile( outputFile.c_str() );
+    }
+    
+    // validate matrix elements
+    {
+        EventMatrixElementMap::iterator itr = m_matrixElements.begin();
+        EventMatrixElementMap::iterator end = m_matrixElements.end();
+        while (itr != end)
+        {
+            if (itr->second.size() != nEvaluations)
+            {
+                LogMsgWarning( "Discarding event %i. Evaluations: %u, require: %u.", FMT_I(itr->first), FMT_U(itr->second.size()), FMT_U(nEvaluations) );
+                itr = m_matrixElements.erase(itr);  // returned itr is next itr in map
+                continue;
+            }
+            ++itr;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const SherpaWeight::DoubleVector & SherpaWeight::MatrixElements( int32_t eventId ) const
+{
+    EventMatrixElementMap::const_iterator itrFind = m_matrixElements.find(eventId);
+
+    if (itrFind == m_matrixElements.end())
+    {
+        static const DoubleVector empty;
+        return empty;
+    }
+    
+    return itrFind->second;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+const SherpaWeight::DoubleVector SherpaWeight::CoefficientValues( int32_t eventId ) const
+{
+    DoubleVector coefs;
+    
+    const DoubleVector & matrixElements = MatrixElements(eventId);
+
+    if (matrixElements.size() == m_invCoefMatrix.size())
+    {
+        size_t nCoefs = m_invCoefMatrix.size();
+        
+        coefs.resize(nCoefs);
+        
+        for (size_t i = 0; i < nCoefs; ++i)
+        {
+            double & coef = coefs[i];
+
+            for (size_t j = 0; j < nCoefs; ++j)
+            {
+                coef += m_invCoefMatrix[i][j] * matrixElements[j];
+            }
+        }
+    }
+
+    return coefs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::AddMatrixElementsFromFile( const char * filePath )
+{
+    // open input file
+    
+    LogMsgInfo( "Adding ME from root file: %hs", FMT_HS(filePath) );
+
+    std::unique_ptr<TFile> upInputFile( new TFile(filePath) );
+
+    if (upInputFile->IsZombie() || !upInputFile->IsOpen())      // IsZombie is true if constructor failed
+        ThrowError( ("Failed to open ME root file (" + std::string(filePath) + ")").c_str() );
+    
+    // get and setup input tree
+    
+    TTree * pInputTree = nullptr;
+    upInputFile->GetObject( "SherpaME", pInputTree );
+    if (!pInputTree)
+        ThrowError( "Failed to load input file tree." );
+    
+    MERootEvent inputEvent;
+    inputEvent.SetInputTree(   pInputTree  );
+    
+    // loop through and process each input event
+    
+    const Long64_t nEntries = pInputTree->GetEntries();
+    
+    for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
+    {
+        if (pInputTree->LoadTree(iEntry) < 0)
+        {
+            LogMsgError( "LoadTree failed on entry %lli", FMT_LLI(iEntry) );
+            break;
+        }
+        
+        if (pInputTree->GetEntry(iEntry) < 0)
+        {
+            LogMsgError( "GetEntry failed on entry %lli", FMT_LLI(iEntry) );
+            break;
+        }
+
+        AddMatrixElement( inputEvent.id, inputEvent.me );
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::AddMatrixElement( int32_t eventId, double me )
+{
+    DoubleVector & vector = m_matrixElements[eventId];
+    vector.push_back( me );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,61 +427,84 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
 
     // fill in coef matrix
     {
-        // filling of Mvector
-        size_t k;
+        coefNames.resize( nCoefs );
+
         for (size_t r = 0; r < nCoefs; ++r)
         {
-            coef[r][0] = 1.0;
-            k = 1 + nParam;
-
-            for (size_t c = 0; c < nParam; ++c)
+            size_t c = 0;
+            
+            // 0th order term
             {
-                double value   = eval[r][c];
-                double sqValue = value * value;
-
-                coef[r][c + 1] = value;     // single terms
-                coef[r][k]     = sqValue;   // square terms
-                
-                k += nParam - c;
+                coef[r][c] = 1.0;
+                if (r == 0) coefNames[c] = "F00";
+                ++c;
             }
 
-            // interference terms
-            k = 1 + nParam;
-            for (size_t c = 0; c < nParam - 1; ++c)
+            // 1st order terms
+            for (size_t i = 0; i < nParam; ++i)
             {
-                for (size_t j = c + 1; j < nParam; ++j)
+                coef[r][c] = eval[r][i];
+                if (r == 0) coefNames[c] = "F0" + std::to_string(i+1) + "_" + parameters[i].name;
+                ++c;
+            }
+
+            // square and cross terms
+            for (size_t i = 0; i < nParam; ++i)
+            {
+                for (size_t j = i; j < nParam; ++j)
                 {
-                    double value = eval[r][c] * eval[r][j];
-                
-                    coef[r][k + j - c] = value;
+                    coef[r][c] = eval[r][i] * eval[r][j];
+                    if (r == 0)
+                    {
+                        coefNames[c] = "F" + std::to_string(i+1) + std::to_string(j+1) + "_" + parameters[i].name;
+                        if (i != j) coefNames[c] += "_" + parameters[j].name;
+                    }
+                    ++c;
                 }
-
-                k += nParam - c;
             }
+        }
+    }
+    
+    DoubleMatrix coefMatrix;  // for debugging
+    {
+        coefMatrix.resize( nCoefs );
+        for (size_t r = 0; r < nCoefs; ++r)
+        {
+            coefMatrix[r].assign( coef[r], coef[r] + nCoefs );
         }
     }
     
     // invert coefficient matrix
     {
-        TMatrixD matrix( (Int_t)nCoefs, (Int_t)nCoefs, static_cast<const Double_t *>( coef[0] ) );
-        matrix.Invert();
-        
-        /*
-        // get rid of numerical precision residuals
-        for (size_t i = 0; i < nCoefs; ++i)
-        {
-            for (size_t j = 0; j < nCoefs; ++j)
-            {
-                if (abs(matrix[i][j]) < 1.0E-10)
-                    matrix[i][j] = 0.0;
-            }
-        }
-        */
-        
-        memcpy( coef[0], matrix.GetMatrixArray(), sizeof(coef) );
+        TMatrixD matrix( (Int_t)nCoefs, (Int_t)nCoefs, static_cast<const Double_t *>( coef[0] ) );  // copy coef to TMatrixD
+
+        Double_t determinant = 0;
+        matrix.Invert( &determinant );
+        if (fabs(determinant) < std::numeric_limits<Double_t>::epsilon())
+            ThrowError( std::logic_error( "Bilinear coefficient matrix is singular and cannot be inverted." ) );
+
+        matrix.GetMatrix2Array( static_cast<double *>( coef[0] ) );     // copy back to coef
     }
 
-    // fill in output matrices
+    /*
+    // get rid of numerical precision residuals
+    {
+        const double epsilon = std::numeric_limits<float>::epsilon();
+        
+        for (size_t r = 0; r < nCoefs; ++r)
+        {
+            for (size_t c = 0; c < nCoefs; ++c)
+            {
+                double & entry = coef[r][c];
+
+                if (fabs(entry) < epsilon)
+                    entry = 0.0;
+            }
+        }
+    }
+    */
+
+    // copy to output matrices
     {
         evalMatrix   .resize( nCoefs );
         invCoefMatrix.resize( nCoefs );
@@ -384,6 +583,9 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
                         // replace value
                         value = paramValues[i];
                         sprintf( pDst, "  %i  %.13E  # %s\n", FMT_I(id), FMT_F(value), FMT_HS(name) );
+                        
+                        // TODO: add code to check if any parameter values are missing from the file
+                        
                         break;
                     }
                 }
