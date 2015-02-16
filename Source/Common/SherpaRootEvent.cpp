@@ -32,26 +32,20 @@ static bool AttachBranchToVariable( TTree * pTree, const char * branchName, T & 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-static bool CreateBranchForVariable( TTree * pTree, const char * branchName, T * pVariable ) //, const char * pLeafList = nullptr )
+static bool CreateBranchForVariable( TTree * pTree, const char * branchName, T * pVariable, const char * pLeafList = nullptr )
 {
-    pTree->Branch( branchName, pVariable );
+    if (!pLeafList)
+        pTree->Branch( branchName, pVariable );                 // derive size from type T
+    else
+        pTree->Branch( branchName, pVariable, pLeafList );      // derive size from pLeafList content
     return true;
 }
 
 template<typename T>
-static bool CreateBranchForVariable( TTree * pTree, const char * branchName, T & variable )
+static bool CreateBranchForVariable( TTree * pTree, const char * branchName, T & variable, const char * pLeafList = nullptr  )
 {
-    return CreateBranchForVariable(pTree, branchName, &variable );
+    return CreateBranchForVariable(pTree, branchName, &variable, pLeafList );
 }
-/*
-template<typename T, int n>
-static bool CreateBranchForVariable( TTree * pTree, const char * branchName, T variable[n] )
-{
-    std::stringstream stream;
-    stream << branchName << '[' << n << ']';
-    return CreateBranchForVariable(pTree, branchName, variable, stream.str().c_str() );
-}*/
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void SherpaRootEvent::SetInputTree( TTree * pTree )
@@ -90,28 +84,28 @@ void SherpaRootEvent::SetInputTree( TTree * pTree )
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void SherpaRootEvent::SetOutputTree( TTree * pTree )
 {
-    CreateBranchForVariable( pTree, "id",          id          );
-    CreateBranchForVariable( pTree, "nparticle",   nparticle   );
-    CreateBranchForVariable( pTree, "px[4]",       px          );
-    CreateBranchForVariable( pTree, "py[4]",       py          );
-    CreateBranchForVariable( pTree, "pz[4]",       pz          );
-    CreateBranchForVariable( pTree, "E[4]",        E           );
-    CreateBranchForVariable( pTree, "alphas",      alphas      );
-    CreateBranchForVariable( pTree, "kf[4]",       kf          );
-    CreateBranchForVariable( pTree, "weight",      weight      );
-    CreateBranchForVariable( pTree, "weight2",     weight2     );
-    CreateBranchForVariable( pTree, "me_wgt",      me_wgt      );
-    CreateBranchForVariable( pTree, "me_wgt2",     me_wgt2     );
-    CreateBranchForVariable( pTree, "x1",          x1          );
-    CreateBranchForVariable( pTree, "x2",          x2          );
-    CreateBranchForVariable( pTree, "x1p",         x1p         );
-    CreateBranchForVariable( pTree, "x2p",         x2p         );
-    CreateBranchForVariable( pTree, "id1",         id1         );
-    CreateBranchForVariable( pTree, "id2",         id2         );
-    CreateBranchForVariable( pTree, "fac_scale",   fac_scale   );
-    CreateBranchForVariable( pTree, "ren_scale",   ren_scale   );
-    CreateBranchForVariable( pTree, "nuwgt",       nuwgt       );
-    CreateBranchForVariable( pTree, "usr_wgts[1]", usr_wgts    );
-    CreateBranchForVariable( pTree, "alphasPower", alphasPower );
-    CreateBranchForVariable( pTree, "part[2]",     part        );
+    CreateBranchForVariable( pTree, "id",          id           );
+    CreateBranchForVariable( pTree, "nparticle",   nparticle    );
+    CreateBranchForVariable( pTree, "px",          px,          "px[nparticle]/F" );
+    CreateBranchForVariable( pTree, "py",          py,          "py[nparticle]/F" );
+    CreateBranchForVariable( pTree, "pz",          pz,          "pz[nparticle]/F" );
+    CreateBranchForVariable( pTree, "E",           E,           "E[nparticle]/F"  );
+    CreateBranchForVariable( pTree, "alphas",      alphas       );
+    CreateBranchForVariable( pTree, "kf",          kf,          "kf[nparticle]/I" );
+    CreateBranchForVariable( pTree, "weight",      weight       );
+    CreateBranchForVariable( pTree, "weight2",     weight2      );
+    CreateBranchForVariable( pTree, "me_wgt",      me_wgt       );
+    CreateBranchForVariable( pTree, "me_wgt2",     me_wgt2      );
+    CreateBranchForVariable( pTree, "x1",          x1           );
+    CreateBranchForVariable( pTree, "x2",          x2           );
+    CreateBranchForVariable( pTree, "x1p",         x1p          );
+    CreateBranchForVariable( pTree, "x2p",         x2p          );
+    CreateBranchForVariable( pTree, "id1",         id1          );
+    CreateBranchForVariable( pTree, "id2",         id2          );
+    CreateBranchForVariable( pTree, "fac_scale",   fac_scale    );
+    CreateBranchForVariable( pTree, "ren_scale",   ren_scale    );
+    CreateBranchForVariable( pTree, "nuwgt",       nuwgt        );
+    CreateBranchForVariable( pTree, "usr_wgts",    usr_wgts,    "usr_wgts[nuwgt]/D" );
+    CreateBranchForVariable( pTree, "alphasPower", alphasPower  );
+    CreateBranchForVariable( pTree, "part",        part,        "part[2]/C" );
 }
