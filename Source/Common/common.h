@@ -78,9 +78,21 @@ inline void LogMsgError( const char * format, ... ) throw()
     throw std::runtime_error( what );
 }
 
+[[noreturn]] inline void ThrowError( const std::string & what )
+{
+    LogMsgError(what.c_str());
+    throw std::runtime_error( what );
+}
+
 [[noreturn]] inline void ThrowError( std::errc code, const char * what )
 {
     LogMsgError(what);
+    throw std::system_error( make_error_code(code), what );
+}
+
+[[noreturn]] inline void ThrowError( std::errc code, const std::string & what )
+{
+    LogMsgError(what.c_str());
     throw std::system_error( make_error_code(code), what );
 }
 

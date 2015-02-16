@@ -312,7 +312,7 @@ void SherpaWeight::AddMatrixElementsFromFile( const char * filePath )
     std::unique_ptr<TFile> upInputFile( new TFile(filePath) );
 
     if (upInputFile->IsZombie() || !upInputFile->IsOpen())      // IsZombie is true if constructor failed
-        ThrowError( ("Failed to open ME root file (" + std::string(filePath) + ")").c_str() );
+        ThrowError( "Failed to open ME root file (" + std::string(filePath) + ")" );
     
     // get and setup input tree
     
