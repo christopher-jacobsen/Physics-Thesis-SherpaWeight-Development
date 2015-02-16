@@ -72,6 +72,12 @@ int SherpaWeightProgram::Run( const RunParameters & param )
         // initialize sherpa weight
         m_upSherpaWeight->Initialize( param.inputRootFileName, param.argv );
 
+        if (!m_upSherpaWeight->NCoefficients())
+        {
+            LogMsgInfo( "No reweighting parameters defined. Nothing to do." );
+            return EXIT_SUCCESS;
+        }
+        
         // evaluate the events
         m_upSherpaWeight->EvaluateEvents();
         
@@ -133,6 +139,30 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
 
     currentEvent.SetInputTree(  pInputTree  );
     currentEvent.SetOutputTree( pOutputTree );
+    
+    // add coefficient output variables
+    
+    const SherpaWeight::StringVector & coefNames = m_upSherpaWeight->CoefficientNames();
+
+    std::vector<double> eventCoefs( m_upSherpaWeight->NCoefficients() );  // storage for event reweight coefficients
+
+    if (eventCoefs.size())
+    {
+        if (coefNames.size() != eventCoefs.size())
+        {
+            ThrowError( std::logic_error( "Number of coefficient names (" + std::to_string(coefNames.size()) +
+                                          ") does not match number of coefficients (" + std::to_string(eventCoefs.size())  + ")." ) );
+        }
+        
+        size_t index = 0;
+        for (const std::string & name : coefNames)
+        {
+            std::string shortName = name.substr(0, name.find("_") );
+            TBranch * pBranch = pOutputTree->Branch( shortName.c_str(), &eventCoefs[index] );
+            pBranch->SetTitle( (name + "/D").c_str() );
+            ++index;
+        }
+    }
 
     // loop through entries
     
@@ -160,17 +190,21 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
             {
                 LogMsgInfo( "Event %i coefficients:", FMT_I(currentEvent.id) );
 
-                const SherpaWeight::StringVector & names = m_upSherpaWeight->CoefficientNames();
                 size_t index = 0;
                 for (double value : coefs)
                 {
-                    const char * pName = (index < names.size()) ? names[index].c_str() : "Unknown";
+                    const char * pName = (index < coefNames.size()) ? coefNames[index].c_str() : "Unknown";
                     LogMsgInfo( "%-20hs:\t%.15E", FMT_HS(pName), FMT_F(value) );
                     ++index;
                 }
                 
                 LogMsgInfo( "" );
             }
+            
+            if (coefs.size() == eventCoefs.size())
+                std::copy( coefs.begin(), coefs.end(), eventCoefs.begin() );
+            else
+                std::fill( eventCoefs.begin(), eventCoefs.end(), 0.0 );
         }
         
         
