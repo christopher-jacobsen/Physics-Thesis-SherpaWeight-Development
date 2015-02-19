@@ -19,6 +19,16 @@
 		23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23AC9D8E1A8CCD5100BD70A3 /* main.cpp */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		23759B201A968D3300106D4D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 230EC6CB1A77A10F00DC49D3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 23AC9D8B1A8CCD5100BD70A3;
+			remoteInfo = SherpaME;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		230EC6D11A77A10F00DC49D3 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -225,6 +235,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				23759B211A968D3300106D4D /* PBXTargetDependency */,
 			);
 			name = SherpaWeight;
 			productName = SherpaWeight;
@@ -301,6 +312,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		23759B211A968D3300106D4D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 23AC9D8B1A8CCD5100BD70A3 /* SherpaME */;
+			targetProxy = 23759B201A968D3300106D4D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		230EC6DA1A77A10F00DC49D3 /* Debug */ = {
