@@ -55,18 +55,15 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
         //runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
         
         if (!m_upSherpa->InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
-        {
-            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-            throw int(-2);  // TODO
-        }
+            ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
     }
     
     // get the various configuration paths and file names
     
     SHERPA::Initialization_Handler * pInitHandler = m_upSherpa->GetInitHandler();
     if (!pInitHandler)
-        throw int(-2); // TODO
-    
+        ThrowError( "Failed to get Sherpa initialization handler. Is Sherpa initialized?" );
+
     m_sherpaRunPath = pInitHandler->Path();
     m_sherpaRunFile = pInitHandler->File();
 
@@ -138,7 +135,7 @@ void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
                     stream << row[1];
                     stream >> param.scale;
                     if (stream.fail() || !stream.eof())
-                        throw -2;  // TODO
+                        ThrowError( "Could not convert string to floating point value." );  // caught below
                     
                     if (row.size() > 2)
                     {
@@ -146,13 +143,12 @@ void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
                         stream << row[2];
                         stream >> param.offset;
                         if (stream.fail() || !stream.eof())
-                            throw -2;  // TODO
+                            ThrowError( "Could not convert string to floating point value." );  // caught below
                     }
                 }
                 catch (const std::exception & error)
                 {
-                    LogMsgError( "Failed to read scale/offset for reweight parameter %hs", FMT_HS(param.name.c_str()) );
-                    throw;
+                    ThrowError( "Failed to read scale/offset for reweight parameter " + param.name );
                 }
             }
             
@@ -216,7 +212,7 @@ void SherpaWeight::EvaluateEvents()
     // run evaluations
     
     std::string outputFile( tmpPath + "SherpaME-tmp.root" );
-    std::string baseCommand( m_appRunPath + "SherpaME" );  // TODO: add argv[0] path to SherpaWeight not Sherpa run path
+    std::string baseCommand( m_appRunPath + "SherpaME" );
     
     baseCommand += " " + m_eventFileName;
     baseCommand += " " + outputFile;
@@ -319,10 +315,10 @@ void SherpaWeight::AddMatrixElementsFromFile( const char * filePath )
     TTree * pInputTree = nullptr;
     upInputFile->GetObject( "SherpaME", pInputTree );
     if (!pInputTree)
-        ThrowError( "Failed to load input file tree." );
+        ThrowError( "Failed to load input tree." );
     
     MERootEvent inputEvent;
-    inputEvent.SetInputTree(   pInputTree  );
+    inputEvent.SetInputTree( pInputTree );
     
     // loop through and process each input event
     
@@ -331,16 +327,10 @@ void SherpaWeight::AddMatrixElementsFromFile( const char * filePath )
     for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
     {
         if (pInputTree->LoadTree(iEntry) < 0)
-        {
-            LogMsgError( "LoadTree failed on entry %lli", FMT_LLI(iEntry) );
-            break;
-        }
+            ThrowError( "LoadTree failed on entry " + std::to_string(iEntry) );
         
         if (pInputTree->GetEntry(iEntry) < 0)
-        {
-            LogMsgError( "GetEntry failed on entry %lli", FMT_LLI(iEntry) );
-            break;
-        }
+            ThrowError( "GetEntry failed on entry " + std::to_string(iEntry) );
 
         AddMatrixElement( inputEvent.id, inputEvent.me );
     }
@@ -536,16 +526,16 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
 
 
     if (parameters.size() != paramValues.size())
-        throw -4; // TODO
+        ThrowError( std::invalid_argument( "CreateFeynRulesParamCard: mismatch in size of parameter and value vectors." ) );
     
     local.fpSrc = fopen( srcFilePath.c_str(), "rt" );
     if (!local.fpSrc)
-        throw -5;   // TODO
-    
+        ThrowError( std::system_error( errno, std::generic_category(), "Failed to open FeynRules param card (" + srcFilePath + ")" ) );
+
     local.fpDst = fopen( dstFilePath.c_str(), "wt" );
     if (!local.fpDst)
-        throw -5;   // TODO
-    
+        ThrowError( std::system_error( errno, std::generic_category(), "Failed to create FeynRules param card (" + srcFilePath + ")" ) );
+
     const size_t maxLine = 1024;
     char srcBuffer[maxLine];
     char dstBuffer[maxLine];
@@ -597,14 +587,5 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
     }
     
     if (!feof(local.fpSrc))
-    {
-        if (ferror(local.fpSrc))
-        {
-            throw -6;
-        }
-        else
-        {
-            throw -7;
-        }
-    }
+        ThrowError( "Failed to read FeynRules param card (" + srcFilePath + ")" );
 }

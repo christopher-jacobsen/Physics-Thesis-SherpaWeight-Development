@@ -122,7 +122,7 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
     TTree * pInputTree = nullptr;
     upInputFile->GetObject( "t3", pInputTree );
     if (!pInputTree)
-        ThrowError( "Failed to load input file tree." );
+        ThrowError( "Failed to load input tree." );
 
     // create output tree
 
@@ -171,16 +171,10 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
     for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
     {
         if (pInputTree->LoadTree(iEntry) < 0)
-        {
-            LogMsgError( "LoadTree failed on entry %lli", FMT_LLI(iEntry) );
-            ThrowError( std::errc::io_error, "Save of coefficients is incomplete." );
-        }
+            ThrowError( "LoadTree failed on entry " + std::to_string(iEntry) );
         
         if (pInputTree->GetEntry(iEntry) < 0)
-        {
-            LogMsgError( "GetEntry failed on entry %lli", FMT_LLI(iEntry) );
-            ThrowError( std::errc::io_error, "Save of coefficients is incomplete." );
-        }
+            ThrowError( "GetEntry failed on entry " + std::to_string(iEntry) );
         
         {
             SherpaWeight::DoubleVector coefs = m_upSherpaWeight->CoefficientValues( currentEvent.id );
@@ -209,10 +203,7 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
         
         
         if (pOutputTree->Fill() < 0)
-        {
-            LogMsgError( "Fill failed on entry %lli", FMT_LLI(iEntry) );
-            ThrowError( std::errc::io_error, "Save of coefficients is incomplete." );
-        }
+            ThrowError( "Fill failed on entry " + std::to_string(iEntry) );
     }
     
     upOutputFile->Write( 0, TFile::kOverwrite );

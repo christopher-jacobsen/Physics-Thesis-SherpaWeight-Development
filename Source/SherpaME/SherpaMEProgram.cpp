@@ -82,10 +82,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
         // initialize sherpa
         
         if (!m_upSherpa->InitializeTheRun( static_cast<int>(param.argv.size()), const_cast<char **>(param.argv.data()) ))
-        {
-            LogMsgError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-            throw int(-2);  // TODO
-        }
+            ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
         
         // open input file
 
@@ -94,7 +91,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
         if (upInputFile->IsZombie() || !upInputFile->IsOpen())      // IsZombie is true if constructor failed
         {
             LogMsgError( "Failed to open input file (%hs).", FMT_HS(param.inputRootFileName.c_str()) );
-            return -2;
+            ThrowError( std::invalid_argument( param.inputRootFileName ) );
         }
 
         // create output file
@@ -104,7 +101,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
         if (upOutputFile->IsZombie() || !upOutputFile->IsOpen())    // IsZombie is true if constructor failed
         {
             LogMsgError( "Failed to create output file (%hs).", FMT_HS(param.outputRootFileName.c_str()) );
-            return -2;
+            ThrowError( std::invalid_argument( param.outputRootFileName ) );
         }
 
         // get and setup input tree
@@ -112,19 +109,14 @@ int SherpaMEProgram::Run( const RunParameters & param )
         TTree * pInputTree = nullptr;
         upInputFile->GetObject( "t3", pInputTree );
         if (!pInputTree)
-        {
-            LogMsgError( "Failed to load input file tree." );
-            return -2;
-        }
+            ThrowError( "Failed to load input tree." );
 
         // create output tree
 
         TTree * pOutputTree( new TTree( "SherpaME", "SherpaME" ) );   // owned by current directory
         if (pOutputTree->IsZombie())
-        {
-            LogMsgError("Failed to construct output tree.");
-            return -2;
-        }
+            ThrowError("Failed to construct output tree.");
+
         pOutputTree->SetDirectory( upOutputFile.get() );   // attach to output file, output file now owns tree and will call delete
         pOutputTree->SetAutoSave(0);                       // disable autosave
 
@@ -143,25 +135,16 @@ int SherpaMEProgram::Run( const RunParameters & param )
         for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
         {
             if (pInputTree->LoadTree(iEntry) < 0)
-            {
-                LogMsgError( "LoadTree failed on entry %lli", FMT_LLI(iEntry) );
-                break;
-            }
+                ThrowError( "LoadTree failed on entry " + std::to_string(iEntry) );
             
             if (pInputTree->GetEntry(iEntry) < 0)
-            {
-                LogMsgError( "GetEntry failed on entry %lli", FMT_LLI(iEntry) );
-                break;
-            }
+                ThrowError( "GetEntry failed on entry " + std::to_string(iEntry) );
             
             if (!ProcessEvent( inputEvent, outputEvent ))
                 continue;
             
             if (pOutputTree->Fill() < 0)
-            {
-                LogMsgError( "Fill failed on entry %lli", FMT_LLI(iEntry) );
-                break;
-            }
+                ThrowError( "Fill failed on entry " + std::to_string(iEntry) );
         }
         
         // write and close the output file (not really necessary as would be done in destructor)
@@ -292,14 +275,10 @@ bool SherpaMEProgram::ProcessEvent( const SherpaRootEvent & inputEvent, MERootEv
 double SherpaMEProgram::GetEventME( size_t nInParticles, const std::vector<int> & particleCodes, const ATOOLS::Vec4D_Vector & particleMomenta )
 {
     if (!nInParticles || (nInParticles > particleCodes.size()))
-    {
-        throw int(-2);  // TODO
-    }
+        ThrowError( std::invalid_argument( "GetEventME: invalid number of input particles " + std::to_string(nInParticles) ) );
     
     if (particleCodes.size() != particleMomenta.size())
-    {
-        throw int(-2);  // TODO
-    }
+        ThrowError( std::invalid_argument( "GetEventME: mismatch in number of particle codes and momenta" ) );
     
     SherpaMECalculator meCalc( m_upSherpa.get() );
 
