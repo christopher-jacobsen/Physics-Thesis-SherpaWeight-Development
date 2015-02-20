@@ -3,12 +3,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "SherpaWeight.h"
-#include "SherpaMECalculator.h"
 #include "MERootEvent.h"
 
 #include "common.h"
 
 #include <limits>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sherpa and Root include files
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
 
 // Sherpa includes
 #include <SHERPA/Main/Sherpa.H>
@@ -19,6 +24,8 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TMatrixD.h>
+
+#pragma clang diagnostic pop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight

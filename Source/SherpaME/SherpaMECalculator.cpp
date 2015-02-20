@@ -4,6 +4,15 @@
 
 #include "SherpaMECalculator.h"
 
+#include <sstream>
+#include <algorithm>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sherpa include files
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+
 #include <SHERPA/Main/Sherpa.H>
 #include <SHERPA/PerturbativePhysics/Matrix_Element_Handler.H>
 #include <SHERPA/Initialization/Initialization_Handler.H>
@@ -20,8 +29,9 @@
 #include <PHASIC++/Process/Subprocess_Info.H>
 #include <PHASIC++/Main/Process_Integrator.H>
 
-#include <sstream>
-#include <algorithm>
+#pragma clang diagnostic pop
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SherpaMECalculator::SherpaMECalculator(SHERPA::Sherpa *a_Generator) :
 m_name(""), p_amp(ATOOLS::Cluster_Amplitude::New()),

@@ -8,7 +8,11 @@
 
 #include "common.h"
 
-// TODO: pragma warnings away?
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sherpa and Root include files
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
 
 // Sherpa includes
 #include <ATOOLS/Org/Exception.H>
@@ -16,6 +20,8 @@
 // Root includes
 #include <TFile.h>
 #include <TTree.h>
+
+#pragma clang diagnostic pop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight

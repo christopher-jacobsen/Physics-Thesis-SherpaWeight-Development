@@ -8,9 +8,17 @@
 #include <vector>
 #include <string>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Sherpa include files
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+
 #include "ATOOLS/Math/Vector.H"
 #include "ATOOLS/Phys/Flavour.H"
 #include "MODEL/Main/Model_Base.H"
+
+#pragma clang diagnostic pop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // forward declarations
