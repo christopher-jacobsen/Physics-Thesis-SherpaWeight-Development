@@ -169,8 +169,35 @@ void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void SherpaWeight::SetParameters( const ParameterVector & params )
 {
-    // TODO:: ensure all names are unique
-    
+    // ensure all names are unique
+    {
+        std::set<std::string> duplicateNames;
+
+        for (auto itr1 = params.cbegin(), end = params.cend(); itr1 != end; ++itr1)
+        {
+            for (auto itr2 = itr1 + 1; itr2 != end; ++itr2)
+            {
+                if (itr1->name == itr2->name)
+                {
+                    duplicateNames.insert( itr1->name );
+                    break;
+                }
+            }
+        }
+
+        if (!duplicateNames.empty())
+        {
+            std::string strDup;
+            for (const std::string & s : duplicateNames)
+            {
+                if (!strDup.empty()) strDup += ", ";
+                strDup += s;
+            }
+            
+            ThrowError( "Duplicate reweight parameters: " + strDup );
+        }
+    }
+
     m_parameters = params;
     
     // calculate bilinear matrices
