@@ -561,7 +561,15 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
 
     if (parameters.size() != paramValues.size())
         ThrowError( std::invalid_argument( "CreateFeynRulesParamCard: mismatch in size of parameter and value vectors." ) );
-    
+
+    // setup remainingNames to track outstanding parameter substitutions
+    std::set<std::string> remainingNames;
+
+    for (const ReweightParameter & p : parameters)
+        remainingNames.insert( p.name );
+
+    // open files
+
     local.fpSrc = fopen( srcFilePath.c_str(), "rt" );
     if (!local.fpSrc)
         ThrowError( std::system_error( errno, std::generic_category(), "Failed to open FeynRules param card (" + srcFilePath + ")" ) );
@@ -569,6 +577,8 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
     local.fpDst = fopen( dstFilePath.c_str(), "wt" );
     if (!local.fpDst)
         ThrowError( std::system_error( errno, std::generic_category(), "Failed to create FeynRules param card (" + srcFilePath + ")" ) );
+
+    // copy all lines from source to destination, substituting parameter values
 
     const size_t maxLine = 1024;
     char srcBuffer[maxLine];
@@ -608,7 +618,7 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
                         value = paramValues[i];
                         sprintf( pDst, "  %i  %.13E  # %s\n", FMT_I(id), FMT_F(value), FMT_HS(name) );
                         
-                        // TODO: add code to check if any parameter values are missing from the file
+                        remainingNames.erase( parameters[i].name );
                         
                         break;
                     }
@@ -622,4 +632,16 @@ void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, co
     
     if (!feof(local.fpSrc))
         ThrowError( "Failed to read FeynRules param card (" + srcFilePath + ")" );
+
+    if (!remainingNames.empty())
+    {
+        std::string strList;
+        for (const std::string & s : remainingNames)
+        {
+            if (!strList.empty()) strList += ", ";
+            strList += s;
+        }
+        
+        ThrowError( "FeynRules param card (" + srcFilePath + ") missing reweight parameters: " + strList );
+    }
 }
