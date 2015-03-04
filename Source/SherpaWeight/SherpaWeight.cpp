@@ -57,23 +57,66 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
     
     {
         std::string application( argv[0] );
+        LogMsgInfo( application.c_str() );
         m_appRunPath = application.substr( 0, application.rfind("/") ) + "/";
     }
-    
+
     // initialize sherpa
     {
-        //std::vector<const char *> runArgv(m_argv);
-        //runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
-        
-        if (!m_upSherpa->InitializeTheRun( static_cast<int>(m_argv.size()), const_cast<char **>(m_argv.data()) ))
+        LogMsgInfo( "\n+----------------------------------------------------------+"   );
+        LogMsgInfo(   "|  Initializing Sherpa Framework                           |"   );
+        LogMsgInfo(   "+----------------------------------------------------------+\n" );
+
+        time_t startTime = time(nullptr);
+
+        std::vector<const char *> runArgv(m_argv);
+
+        runArgv.push_back( "OUTPUT=0"  );   // only error output
+        runArgv.push_back( "LOG_FILE=" );   // no log file
+      //runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
+
+        if (!m_upSherpa->InitializeTheRun( static_cast<int>(runArgv.size()), const_cast<char **>(runArgv.data()) ))
             ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
+
+        time_t stopTime = time(nullptr);
+
+        LogMsgInfo( "Sherpa initialized (%u seconds).\n", FMT_U(stopTime - startTime) );
     }
-    
+
     SHERPA::Initialization_Handler * pInitHandler = m_upSherpa->GetInitHandler();
     if (!pInitHandler)
         ThrowError( "Failed to get Sherpa initialization handler. Is Sherpa initialized?" );
 
     m_sherpaRunPath = pInitHandler->Path();
+
+    LogMsgInfo( "Run Path:\t\t" + SherpaRunPath()      );
+    LogMsgInfo( "Run File:\t\t" + pInitHandler->File() );
+
+    // read the run file/section for run parameters
+    {
+        std::string runFileSection  = pInitHandler->File();
+        std::string runFileBase     = runFileSection.substr( 0, runFileSection.find("|") );  // strip off section declaration following '|'
+
+        ATOOLS::Data_Reader reader(" ",";","!","=");
+        reader.AddComment("#");
+        reader.AddWordSeparator("\t");
+        reader.SetInputPath( SherpaRunPath() );
+        reader.SetInputFile( runFileSection );
+        
+        // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
+
+        m_sherpaWeightFileSection = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", runFileBase + "|(SherpaWeight){|}(SherpaWeight)" );
+        LogMsgInfo( "Configuration:\t" + m_sherpaWeightFileSection );
+    }
+
+    // determine and create temporary work directory
+    {
+        m_tmpPath = SherpaRunPath() + "SherpaWeight.tmp/";
+        LogMsgInfo( "Temporary Path:\t" + TemporaryPath() );
+
+        std::string command = "mkdir -p \"" + TemporaryPath() + "\"";
+        system( command.c_str() );
+    }
 
     // determine the model interface
 
@@ -92,29 +135,6 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
 
         if (!m_pModel)
             ThrowError( "Model " + modelName + " is not supported." );
-    }
-
-    // read the run file/section for run parameters
-    {
-        std::string runFileSection  = pInitHandler->File();
-        std::string runFileBase     = runFileSection.substr( 0, runFileSection.find("|") );  // strip off section declaration following '|'
-
-        ATOOLS::Data_Reader reader(" ",";","!","=");
-        reader.AddComment("#");
-        reader.AddWordSeparator("\t");
-        reader.SetInputPath( SherpaRunPath() );
-        reader.SetInputFile( runFileSection );
-        
-        // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
-
-        m_sherpaWeightFileSection = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", runFileBase + "|(SherpaWeight){|}(SherpaWeight)" );
-    }
-
-    // determine and create temporary work directory
-    {
-        m_tmpPath = SherpaRunPath() + "SherpaWeight.tmp/";
-        std::string command = "mkdir \"" + m_tmpPath + "\"";
-        system( command.c_str() );
     }
 
     // read the model file/section and initialize the model interface
@@ -242,10 +262,20 @@ void SherpaWeight::SetParameters( const ParameterVector & params )
 
     // set the parameters
     m_parameters = params;
-    
+
+    LogMsgInfo( "Reweight parameters (" + std::to_string(m_parameters.size()) + "):" );
+    for (const auto & p : m_parameters)
+        LogMsgInfo( "  " + p.name );
+    LogMsgInfo( "" );
+
     // calculate bilinear matrices
     
     GetBilinearMatrices( m_parameters, m_evalMatrix, m_invCoefMatrix, m_coefNames );
+
+    LogMsgInfo( "Reweight coefficients (" + std::to_string(m_coefNames.size()) + "):" );
+    for (const auto & n : m_coefNames)
+        LogMsgInfo( "  " + n );
+    LogMsgInfo( "" );
 
     m_matrixElements.clear();  // cleanup any previous run
 }
@@ -260,34 +290,52 @@ void SherpaWeight::EvaluateEvents()
     if (nEvaluations == 0)
         return;
 
-    // run evaluations
-    
-    std::string outputFile( TemporaryPath() + "SherpaME-tmp.root" );
-    std::string baseCommand( ApplicationRunPath() + "SherpaME" );
-    
-    baseCommand += " " + m_eventFileName;
-    baseCommand += " " + outputFile;
+    // setup the base SherpaME command
 
+    std::string outputFile  = TemporaryPath()      + "SherpaME_output.root";
+    std::string baseCommand = "\"" + ApplicationRunPath() + "SherpaME\"";
+
+    baseCommand += " \"" + m_eventFileName + "\"";  // input  file
+    baseCommand += " \"" + outputFile      + "\"";  // output file
+
+    // extra sherpa arguments
     for (size_t i = 1; i < m_argv.size(); ++i)
-        baseCommand += std::string(" ") + m_argv[i];
+        baseCommand += std::string(" \"") + m_argv[i] + "\"";
+
+    baseCommand += " OUTPUT=2";     // override output level
+
+    // run evaluations
     
     for (size_t run = 0; run < nEvaluations; ++run)
     {
-        std::string modelArgs = m_pModel->CommandLineArgs( m_parameters, m_evalMatrix[run] );
-        std::string command   = baseCommand + " " + modelArgs;
+        LogMsgInfo( "\n+----------------------------------------------------------+" );
+        LogMsgInfo(   "|  Evaluation Run %2u                                       |", FMT_U(run + 1) );
+        LogMsgInfo(   "+----------------------------------------------------------+\n" );
 
-        LogMsgInfo( "" );
-        LogMsgInfo( "+----------------------------------------------------------+");
-        LogMsgInfo( "|  Evaluation Run %u                                       |", FMT_U(run + 1) );
-        LogMsgInfo( "+----------------------------------------------------------+");
-        LogMsgInfo( "" );
+        // setup the run
+
+        char runString[20];
+        sprintf( runString, "%02u", FMT_U(run + 1) );
+
+        std::string modelArgs = m_pModel->CommandLineArgs( m_parameters, m_evalMatrix[run] );
+
+        std::string logFile   = TemporaryPath() + "SherpaME_" + runString + ".log";
+
+        // remove the previous log file
+        remove( logFile.c_str() );
+
+        // build the command line
+        std::string command = baseCommand;
+
+        command += " \"LOG_FILE=" + logFile + "\"";
+        command += " " + modelArgs;
 
         LogMsgInfo( "Running command:" );
         LogMsgInfo( "%hs\n", FMT_HS(command.c_str()) );
 
         int result = system( command.c_str() );
         if (result != 0)
-            ThrowError( "Evaluation failed." );
+            ThrowError( "Command failed. See log file (" + logFile + ")." );
         
         AddMatrixElementsFromFile( outputFile.c_str() );
     }
@@ -578,9 +626,9 @@ void SherpaWeight::SM_AGC_Model::Initialize( SherpaWeight & parent, ATOOLS::Data
 {
     m_pParent = &parent;
 
-    LogMsgInfo( "------------------------------------------------------------" );
-    LogMsgInfo( "  SM+AGC Model Interface" );
-    LogMsgInfo( "------------------------------------------------------------" );
+    LogMsgInfo( "\n------------------------------------------------------------"   );
+    LogMsgInfo(   "  SM+AGC Model Interface" );
+    LogMsgInfo(   "------------------------------------------------------------\n" );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -668,8 +716,8 @@ void SherpaWeight::FeynRulesModel::Initialize( SherpaWeight & parent, ATOOLS::Da
 {
     m_pParent = &parent;
 
-    LogMsgInfo( "------------------------------------------------------------" );
-    LogMsgInfo( "  FeynRules Model Interface" );
+    LogMsgInfo( "\n------------------------------------------------------------" );
+    LogMsgInfo(   "  FeynRules Model Interface" );
 
     std::string paramCard = modelFileSectionReader.GetValue<std::string>( "FR_PARAMCARD", std::string("param_card.dat") );
     if (paramCard.find("|") != std::string::npos)
@@ -677,8 +725,8 @@ void SherpaWeight::FeynRulesModel::Initialize( SherpaWeight & parent, ATOOLS::Da
 
     m_sourceParamCardFile = paramCard;
 
-    LogMsgInfo( ("  FR_PARAMCARD=" + m_sourceParamCardFile).c_str() );
-    LogMsgInfo( "------------------------------------------------------------" );
+    LogMsgInfo( "  FR_PARAMCARD=" + m_sourceParamCardFile );
+    LogMsgInfo( "------------------------------------------------------------\n" );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
