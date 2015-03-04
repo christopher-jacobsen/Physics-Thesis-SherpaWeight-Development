@@ -69,6 +69,21 @@ inline void LogMsgError( const char * format, ... ) throw()
     va_end(args);
 }
 
+inline void LogMsgInfo( const std::string & str ) throw()
+{
+    LogMsgInfo( str.c_str() );
+}
+
+inline void LogMsgWarning( const std::string & str ) throw()
+{
+    LogMsgWarning( str.c_str() );
+}
+
+inline void LogMsgError( const std::string & str ) throw()
+{
+    LogMsgError( str.c_str() );
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // exception helpers
 
