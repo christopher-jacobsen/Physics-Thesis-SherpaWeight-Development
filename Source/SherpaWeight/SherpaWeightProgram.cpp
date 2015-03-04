@@ -75,6 +75,8 @@ int SherpaWeightProgram::Run( const RunParameters & param )
 {
     try
     {
+        time_t timeStartRun = time(nullptr);
+
         // initialize sherpa weight
         m_upSherpaWeight->Initialize( param.inputRootFileName, param.argv );
 
@@ -88,6 +90,10 @@ int SherpaWeightProgram::Run( const RunParameters & param )
         m_upSherpaWeight->EvaluateEvents();
         
         SaveCoefficients( param );
+
+        time_t timeStopRun = time(nullptr);
+
+        LogMsgInfo( "\nDone. (%u seconds)", FMT_U(timeStopRun - timeStartRun) );
 
         return EXIT_SUCCESS;
     }
@@ -103,6 +109,10 @@ int SherpaWeightProgram::Run( const RunParameters & param )
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
 {
+    LogMsgInfo( "\n+----------------------------------------------------------+"   );
+    LogMsgInfo(   "|  Calculating and Saving Coefficients                     |"   );
+    LogMsgInfo(   "+----------------------------------------------------------+\n" );
+
     // open input file
 
     LogMsgInfo( "Input file : %hs", FMT_HS(param.inputRootFileName.c_str()) );
@@ -172,23 +182,30 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
 
     // loop through entries
     
-    const Long64_t nEntries = pInputTree->GetEntries();
-    
+    const Long64_t nEntries     = pInputTree->GetEntries();
+    const Long64_t logFrequency = std::max( nEntries / 10, Long64_t(1) );
+
+    LogMsgInfo( "\nCalculating coefficients for %lli events ...", FMT_LLI(nEntries) );
+
+    time_t timeStartProcess = time(nullptr);
+
     for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
     {
         if (pInputTree->LoadTree(iEntry) < 0)
-            ThrowError( "LoadTree failed on entry " + std::to_string(iEntry) );
+            ThrowError( "LoadTree failed on entry " + std::to_string(iEntry+1) );
         
         if (pInputTree->GetEntry(iEntry) < 0)
-            ThrowError( "GetEntry failed on entry " + std::to_string(iEntry) );
+            ThrowError( "GetEntry failed on entry " + std::to_string(iEntry+1) );
         
         {
             SherpaWeight::DoubleVector coefs = m_upSherpaWeight->CoefficientValues( currentEvent.id );
             if (coefs.empty())
-                LogMsgWarning( "No coefficients for entry %%li, event id %i", FMT_LLI(iEntry), FMT_I(currentEvent.id) );
-            else
             {
-                LogMsgInfo( "Event %i coefficients:", FMT_I(currentEvent.id) );
+                LogMsgWarning( "No coefficients for event %%li (id %i).", FMT_LLI(iEntry+1), FMT_I(currentEvent.id) );
+            }
+            else if (iEntry % logFrequency == 0)
+            {
+                LogMsgInfo( "Event %lli (id %i):", FMT_LLI(iEntry+1), FMT_I(currentEvent.id) );
 
                 size_t index = 0;
                 for (double value : coefs)
@@ -209,9 +226,13 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
         
         
         if (pOutputTree->Fill() < 0)
-            ThrowError( "Fill failed on entry " + std::to_string(iEntry) );
+            ThrowError( "Fill failed on entry " + std::to_string(iEntry+1) );
     }
     
     upOutputFile->Write( 0, TFile::kOverwrite );
     upOutputFile->Close();
+
+    time_t timeStopProcess = time(nullptr);
+
+    LogMsgInfo( "%lli events completed. (%u seconds)", FMT_LLI(nEntries), FMT_U(timeStopProcess - timeStartProcess) );
 }

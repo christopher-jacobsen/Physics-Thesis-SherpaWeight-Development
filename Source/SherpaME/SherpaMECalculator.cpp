@@ -284,7 +284,7 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
 
     std::string matchName = PHASIC::Process_Base::GenerateName(p_amp);
     
-    std::cout << "Searching for process by name: " << matchName << std::endl;
+    //std::cout << "Searching for process by name: " << matchName << std::endl;
     
     for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
     {
@@ -308,7 +308,7 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
 
     // try to find match by legs
     
-    std::cout << "Searching for process by flavours: " << matchFlavours << std::endl;
+    //std::cout << "Searching for process by flavours: " << matchFlavours << std::endl;
 
     for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
     {

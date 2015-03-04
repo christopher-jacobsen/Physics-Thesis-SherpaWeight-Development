@@ -86,6 +86,8 @@ int SherpaMEProgram::Run( const RunParameters & param )
 {
     try
     {
+        time_t timeStartRun = time(nullptr);
+
         // initialize sherpa
         
         if (!m_upSherpa->InitializeTheRun( static_cast<int>(param.argv.size()), const_cast<char **>(param.argv.data()) ))
@@ -136,28 +138,41 @@ int SherpaMEProgram::Run( const RunParameters & param )
         outputEvent.SetOutputTree( pOutputTree );
         
         // loop through and process each input event
-        
-        const Long64_t nEntries = pInputTree->GetEntries();
+
+        const Long64_t nEntries     = pInputTree->GetEntries();
+        const Long64_t logFrequency = std::max( nEntries / 10, Long64_t(1) );
+
+        LogMsgInfo( "\nGetting matrix elements for %lli events ...", FMT_LLI(nEntries) );
+
+        time_t timeStartProcess = time(nullptr);
         
         for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
         {
             if (pInputTree->LoadTree(iEntry) < 0)
-                ThrowError( "LoadTree failed on entry " + std::to_string(iEntry) );
+                ThrowError( "LoadTree failed on entry " + std::to_string(iEntry+1) );
             
             if (pInputTree->GetEntry(iEntry) < 0)
-                ThrowError( "GetEntry failed on entry " + std::to_string(iEntry) );
+                ThrowError( "GetEntry failed on entry " + std::to_string(iEntry+1) );
             
             if (!ProcessEvent( inputEvent, outputEvent ))
                 continue;
-            
+
+            if (iEntry % logFrequency == 0)
+                LogMsgInfo( "Event %lli (id %i): ME = %E", FMT_LLI(iEntry+1), FMT_I(inputEvent.id), FMT_F(outputEvent.me) );
+
             if (pOutputTree->Fill() < 0)
-                ThrowError( "Fill failed on entry " + std::to_string(iEntry) );
+                ThrowError( "Fill failed on entry " + std::to_string(iEntry+1) );
         }
-        
+
         // write and close the output file (not really necessary as would be done in destructor)
         
         upOutputFile->Write( 0, TFile::kOverwrite );
         upOutputFile->Close();
+
+        time_t timeStopProcess = time(nullptr);
+
+        LogMsgInfo( "%lli events completed. (%u seconds)", FMT_LLI(nEntries), FMT_U(timeStopProcess - timeStartProcess) );
+        LogMsgInfo( "Done. (%u seconds)", FMT_U(timeStopProcess - timeStartRun) );
 
         return EXIT_SUCCESS;
     }
@@ -270,8 +285,6 @@ bool SherpaMEProgram::ProcessEvent( const SherpaRootEvent & inputEvent, MERootEv
 
     double me = GetEventME( 2, particles, momenta );
 
-    LogMsgInfo( "Event %i: ME=%E", FMT_I(inputEvent.id), FMT_F(me) );
-    
     outputEvent.id = inputEvent.id;
     outputEvent.me = me;
     
