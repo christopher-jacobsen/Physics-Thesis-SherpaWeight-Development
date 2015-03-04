@@ -18,6 +18,8 @@
 // Sherpa includes
 #include <SHERPA/Main/Sherpa.H>
 #include <SHERPA/Initialization/Initialization_Handler.H>
+#include <MODEL/Main/Model_Base.h>
+#include <ATOOLS/Org/Run_Parameter.H>
 #include <ATOOLS/Org/Data_Reader.H>
 
 // Root includes
@@ -40,6 +42,8 @@ SherpaWeight::SherpaWeight()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 SherpaWeight::~SherpaWeight() throw()
 {
+    if (m_bOwnModel)
+        delete m_pModel;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,34 +69,67 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
             ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
     }
     
-    // get the various configuration paths and file names
-    
     SHERPA::Initialization_Handler * pInitHandler = m_upSherpa->GetInitHandler();
     if (!pInitHandler)
         ThrowError( "Failed to get Sherpa initialization handler. Is Sherpa initialized?" );
 
     m_sherpaRunPath = pInitHandler->Path();
-    m_sherpaRunFile = pInitHandler->File();
 
-    std::string runFileBase = m_sherpaRunFile.substr( 0, m_sherpaRunFile.find("|") );  // strip off section declaration following '|'
+    // determine the model interface
 
-    // read the run file/section for optional SHERPA_WEIGHT_FILE definition
+    if (!m_pModel)
     {
+        MODEL::Model_Base * pModel = pInitHandler->GetModel();
+        if (!pModel)
+            ThrowError( "Model is undefined. Set MODEL in (model) section of Run.dat file." );
+
+        std::string modelName = pModel->Name();
+
+        if (modelName == "FeynRules")
+            m_pModel = new FeynRulesModel;
+
+        if (!m_pModel)
+            ThrowError( "Model " + modelName + " is not supported." );
+    }
+
+    // read the run file/section for run parameters
+    {
+        std::string runFileSection  = pInitHandler->File();
+        std::string runFileBase     = runFileSection.substr( 0, runFileSection.find("|") );  // strip off section declaration following '|'
+
         ATOOLS::Data_Reader reader(" ",";","!","=");
         reader.AddComment("#");
         reader.AddWordSeparator("\t");
-        reader.SetInputPath( m_sherpaRunPath );
-        reader.SetInputFile( m_sherpaRunFile );
+        reader.SetInputPath( SherpaRunPath() );
+        reader.SetInputFile( runFileSection );
         
         // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
-      
-        m_sherpaWeightRunFile    = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", runFileBase + "|(SherpaWeight){|}(SherpaWeight)" );
-        m_feynRulesParamCardFile = reader.GetValue<std::string>( "FR_PARAMCARD",       std::string("param_card.dat") );
-        
-        // TODO: FR_PARAMCARD could include a section definition, in which case the code for copying FeynRules cards would no longer work
-        // TODO: When refactored to handle multiple models, then param card is feynrules specific, and should be moved to part of a model handler
+
+        m_sherpaWeightFileSection = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", runFileBase + "|(SherpaWeight){|}(SherpaWeight)" );
     }
-    
+
+    // determine and create temporary work directory
+    {
+        m_tmpPath = SherpaRunPath() + "SherpaWeight.tmp/";
+        std::string command = "mkdir \"" + m_tmpPath + "\"";
+        system( command.c_str() );
+    }
+
+    // read the model file/section and initialize the model interface
+    {
+        std::string modelFile = ATOOLS::rpa->gen.Variable("MODEL_DATA_FILE");
+        if (modelFile.empty())
+            ThrowError( "No model file/section defined. Set MODEL_DATA_FILE." );
+
+        ATOOLS::Data_Reader reader(" ",";","!","=");
+        reader.AddComment("#");
+        reader.AddWordSeparator("\t");
+        reader.SetInputPath( SherpaRunPath() );
+        reader.SetInputFile( modelFile );
+
+        m_pModel->Initialize( *this, reader );
+    }
+
     // optionally read reweight parameters from file
     
     if (bReadParameters)
@@ -107,8 +144,8 @@ void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
     ATOOLS::Data_Reader reader(" ",";","!","=");
     reader.AddComment("#");
     reader.AddWordSeparator("\t");
-    reader.SetInputPath( m_sherpaRunPath );
-    reader.SetInputFile( m_sherpaWeightRunFile );
+    reader.SetInputPath( SherpaRunPath() );
+    reader.SetInputFile( m_sherpaWeightFileSection );
     
     // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
     reader.SetAddCommandLine(false);  // read the raw file input
@@ -198,6 +235,10 @@ void SherpaWeight::SetParameters( const ParameterVector & params )
         }
     }
 
+    // validate parameters with model
+    m_pModel->ValidateParameters(params);
+
+    // set the parameters
     m_parameters = params;
     
     // calculate bilinear matrices
@@ -216,37 +257,11 @@ void SherpaWeight::EvaluateEvents()
 
     if (nEvaluations == 0)
         return;
-    
-    // determine and create temporary work directory
-    std::string tmpPath = m_sherpaRunPath + "SherpaWeight/";
-    {
-        std::string command = "mkdir \"" + tmpPath + "\"";
-        system( command.c_str() );
-    }
-
-    // create list of param_card files
-    {
-        std::string srcFilePath = m_sherpaRunPath + m_feynRulesParamCardFile;
-        
-        for (size_t i = 0; i < nEvaluations; ++i)
-        {
-            // construct destination file path
-            char dstFile[40];
-            sprintf( dstFile, "param_card_%03u.dat", FMT_U(i+1) );  // %i is max 10 chars
-            
-            std::string dstFilePath( tmpPath + dstFile );
-            
-            // create param_card with new parameter values
-            CreateFeynRulesParamCard( srcFilePath, dstFilePath, m_parameters, m_evalMatrix[i] );
-            
-            m_paramCards.push_back( std::move(dstFilePath) );
-        }
-    }
 
     // run evaluations
     
-    std::string outputFile( tmpPath + "SherpaME-tmp.root" );
-    std::string baseCommand( m_appRunPath + "SherpaME" );
+    std::string outputFile( TemporaryPath() + "SherpaME-tmp.root" );
+    std::string baseCommand( ApplicationRunPath() + "SherpaME" );
     
     baseCommand += " " + m_eventFileName;
     baseCommand += " " + outputFile;
@@ -256,8 +271,9 @@ void SherpaWeight::EvaluateEvents()
     
     for (size_t run = 0; run < nEvaluations; ++run)
     {
-        std::string command( baseCommand + " \"FR_PARAMCARD=" + m_paramCards[run] + "\"" );
-        
+        std::string modelArgs = m_pModel->CommandLineArgs( m_parameters, m_evalMatrix[run] );
+        std::string command   = baseCommand + " " + modelArgs;
+
         LogMsgInfo( "" );
         LogMsgInfo( "+----------------------------------------------------------+");
         LogMsgInfo( "|  Evaluation Run %u                                       |", FMT_U(run + 1) );
@@ -542,8 +558,60 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::CreateFeynRulesParamCard( const std::string & srcFilePath, const std::string & dstFilePath,
-                                             const ParameterVector & parameters, const DoubleVector & paramValues )    // static
+// class SherpaWeight::FeynRulesModel
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+SherpaWeight::FeynRulesModel::FeynRulesModel()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+SherpaWeight::FeynRulesModel::~FeynRulesModel() throw()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::FeynRulesModel::Initialize( SherpaWeight & parent, ATOOLS::Data_Reader & modelFileSectionReader )
+{
+    LogMsgInfo( "------------------------------------------------------------" );
+    LogMsgInfo( "  FeynRules Model Interface" );
+    LogMsgInfo( "------------------------------------------------------------" );
+
+    m_pParent = &parent;
+
+    std::string paramCard = modelFileSectionReader.GetValue<std::string>( "FR_PARAMCARD", std::string("param_card.dat") );
+    if (paramCard.find("|") != std::string::npos)
+        ThrowError( "FR_PARAMCARD must define only a file and not a section within a file." );
+
+    m_sourceParamCardFile = paramCard;
+
+    LogMsgInfo( ("  FR_PARAMCARD=" + m_sourceParamCardFile).c_str() );
+    LogMsgInfo( "------------------------------------------------------------" );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::FeynRulesModel::ValidateParameters( const ParameterVector & /*params*/ )
+{
+    // do nothing: validate during creation of FeynRules param card
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+std::string SherpaWeight::FeynRulesModel::CommandLineArgs( const ParameterVector & params, const DoubleVector & paramValues )
+{
+    std::string srcFilePath = m_pParent->SherpaRunPath() + m_sourceParamCardFile;
+    std::string dstFilePath = m_pParent->TemporaryPath() + "param_card_me.dat";
+        
+    // create param_card with new parameter values
+    CreateFeynRulesParamCard( srcFilePath, dstFilePath, params, paramValues );
+
+    std::string cmdArgs = "\"FR_PARAMCARD=" + dstFilePath + "\"";
+    return cmdArgs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::FeynRulesModel::CreateFeynRulesParamCard( const std::string & srcFilePath, const std::string & dstFilePath,
+                                                             const ParameterVector & parameters, const DoubleVector & paramValues )    // static
 {
     struct Local  // local object for automated cleanup
     {
