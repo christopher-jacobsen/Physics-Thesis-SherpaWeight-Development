@@ -85,7 +85,9 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
 
         std::string modelName = pModel->Name();
 
-        if (modelName == "FeynRules")
+        if (modelName == "SM+AGC")
+            m_pModel = new SM_AGC_Model;
+        else if (modelName == "FeynRules")
             m_pModel = new FeynRulesModel;
 
         if (!m_pModel)
@@ -558,6 +560,96 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// class SherpaWeight::SM_AGC_Model
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+SherpaWeight::SM_AGC_Model::SM_AGC_Model()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+SherpaWeight::SM_AGC_Model::~SM_AGC_Model() throw()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::SM_AGC_Model::Initialize( SherpaWeight & parent, ATOOLS::Data_Reader & /*modelFileSectionReader*/ )
+{
+    m_pParent = &parent;
+
+    LogMsgInfo( "------------------------------------------------------------" );
+    LogMsgInfo( "  SM+AGC Model Interface" );
+    LogMsgInfo( "------------------------------------------------------------" );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::SM_AGC_Model::ValidateParameters( const ParameterVector & params )
+{
+    static const char * ValidParams[] =
+    {
+        // WWV interactions :
+        "G1_GAMMA", "KAPPA_GAMMA", "LAMBDA_GAMMA", "G4_GAMMA", "G5_GAMMA", "KAPPAT_GAMMA", "LAMBDAT_GAMMA",
+        "G1_Z",     "KAPPA_Z",     "LAMBDA_Z",     "G4_Z",     "G5_Z",     "KAPPAT_Z",     "LAMBDAT_Z",
+
+        // Quadrupole interactions :
+        "ALPHA_4_G_4", "ALPHA_5",
+
+        // Anomalous interactions between photons and Z bosons :
+        "F4_GAMMA", "F5_GAMMA", "H1_GAMMA", "H2_GAMMA", "H3_GAMMA", "H4_GAMMA",
+        "F4_Z",     "F5_Z",     "H1_Z",     "H2_Z",     "H3_Z",     "H4_Z"
+    };
+    const size_t nValid = sizeof(ValidParams) / sizeof(*ValidParams);
+
+    StringVector invalidParam;
+
+    for (const ReweightParameter & p : params)
+    {
+        auto itrFind = std::find( ValidParams, ValidParams + nValid, p.name );
+        if (itrFind == ValidParams + nValid)
+            invalidParam.push_back(p.name);
+    }
+
+    if (!invalidParam.empty())
+    {
+        std::string strInvalid;
+        for (const std::string & s : invalidParam)
+        {
+            if (!strInvalid.empty()) strInvalid += ", ";
+            strInvalid += s;
+        }
+        
+        ThrowError( "Invalid reweight parameters for SM+AGC model: " + strInvalid );
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+std::string SherpaWeight::SM_AGC_Model::CommandLineArgs( const ParameterVector & params, const DoubleVector & paramValues )
+{
+    std::string cmdArgs;
+
+    if (params.size() != paramValues.size())
+        ThrowError( std::invalid_argument( "CommandLineArgs: mismatch in size of parameter and value vectors." ) );
+
+    char buffer[40];
+
+    DoubleVector::const_iterator itrValue = paramValues.cbegin();
+    for (const ReweightParameter & p : params)
+    {
+        double value = *itrValue++;
+        sprintf( buffer, "%.13E", FMT_F(value) );
+
+        if (!cmdArgs.empty()) cmdArgs += " ";
+
+        cmdArgs += p.name;
+        cmdArgs += "=";
+        cmdArgs += buffer;
+    }
+
+    return cmdArgs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight::FeynRulesModel
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -574,11 +666,10 @@ SherpaWeight::FeynRulesModel::~FeynRulesModel() throw()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void SherpaWeight::FeynRulesModel::Initialize( SherpaWeight & parent, ATOOLS::Data_Reader & modelFileSectionReader )
 {
+    m_pParent = &parent;
+
     LogMsgInfo( "------------------------------------------------------------" );
     LogMsgInfo( "  FeynRules Model Interface" );
-    LogMsgInfo( "------------------------------------------------------------" );
-
-    m_pParent = &parent;
 
     std::string paramCard = modelFileSectionReader.GetValue<std::string>( "FR_PARAMCARD", std::string("param_card.dat") );
     if (paramCard.find("|") != std::string::npos)

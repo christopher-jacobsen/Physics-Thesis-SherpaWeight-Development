@@ -51,6 +51,7 @@ public:     ////// public types //////
         virtual std::string CommandLineArgs( const ParameterVector & params, const DoubleVector & paramValues )  = 0;
     };
 
+    class SM_AGC_Model;
     class FeynRulesModel;
 
 public:     ////// public methods //////
@@ -119,6 +120,32 @@ private:    ////// private data //////
 private:
     SherpaWeight(const SherpaWeight &)              = delete;   // disable copy constructor
     SherpaWeight & operator=(const SherpaWeight &)  = delete;   // disable assignment operator
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// class SherpaWeight::SM_AGC_Model
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SherpaWeight::SM_AGC_Model : public SherpaWeight::ModelInterface
+{
+public:
+    SM_AGC_Model();
+    virtual ~SM_AGC_Model() throw();
+
+public:  // ModelInterface overrides
+
+    virtual void Initialize( SherpaWeight & parent, ATOOLS::Data_Reader & modelFileSectionReader );
+
+    virtual void ValidateParameters( const ParameterVector & params );
+
+    virtual std::string CommandLineArgs( const ParameterVector & params, const DoubleVector & paramValues );
+
+private:
+    SherpaWeight *  m_pParent = nullptr;
+
+private:
+    SM_AGC_Model(const SM_AGC_Model &)              = delete;   // disable copy constructor
+    SM_AGC_Model & operator=(const SM_AGC_Model &)  = delete;   // disable assignment operator
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
