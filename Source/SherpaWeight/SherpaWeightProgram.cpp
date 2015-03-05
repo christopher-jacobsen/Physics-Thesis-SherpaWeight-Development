@@ -160,7 +160,7 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
     
     const SherpaWeight::StringVector & coefNames = m_upSherpaWeight->CoefficientNames();
 
-    std::vector<double> eventCoefs( m_upSherpaWeight->NCoefficients() );  // storage for event reweight coefficients
+    SherpaWeight::DoubleVector eventCoefs( m_upSherpaWeight->NCoefficients() );  // storage for event reweight coefficients
 
     if (eventCoefs.size())
     {
@@ -169,11 +169,16 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
             ThrowError( std::logic_error( "Number of coefficient names (" + std::to_string(coefNames.size()) +
                                           ") does not match number of coefficients (" + std::to_string(eventCoefs.size())  + ")." ) );
         }
-        
+
+        // add entire coefficient vector as a branch
+        pOutputTree->Branch( "Fij", &eventCoefs );
+
+        // add each coefficient as an individual branch
         size_t index = 0;
         for (const std::string & name : coefNames)
         {
-            std::string shortName = name.substr(0, name.find("_") );
+            size_t pos = name.find( "_", name.find( "_", name.find("_") + 1 ) + 1 );  // find 3rd underscore
+            std::string shortName = name.substr(0, pos );
             TBranch * pBranch = pOutputTree->Branch( shortName.c_str(), &eventCoefs[index] );
             pBranch->SetTitle( (name + "/D").c_str() );
             ++index;

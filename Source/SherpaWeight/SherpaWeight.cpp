@@ -522,11 +522,11 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
         for (size_t r = 0; r < nCoefs; ++r)
         {
             size_t c = 0;
-            
+
             // 0th order term
             {
                 coef[r][c] = 1.0;
-                if (r == 0) coefNames[c] = "F00";
+                if (r == 0) coefNames[c] = "F_0_0";
                 ++c;
             }
 
@@ -534,7 +534,7 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
             for (size_t i = 0; i < nParam; ++i)
             {
                 coef[r][c] = eval[r][i];
-                if (r == 0) coefNames[c] = "F0" + std::to_string(i+1) + "_" + parameters[i].name;
+                if (r == 0) coefNames[c] = "F_0_" + std::to_string(i+1) + "_" + parameters[i].name;
                 ++c;
             }
 
@@ -546,7 +546,7 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
                     coef[r][c] = eval[r][i] * eval[r][j];
                     if (r == 0)
                     {
-                        coefNames[c] = "F" + std::to_string(i+1) + std::to_string(j+1) + "_" + parameters[i].name;
+                        coefNames[c] = "F_" + std::to_string(i+1) + "_" + std::to_string(j+1) + "_" + parameters[i].name;
                         if (i != j) coefNames[c] += "_" + parameters[j].name;
                     }
                     ++c;
