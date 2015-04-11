@@ -12,9 +12,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Sherpa and Root include files
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-
 // Sherpa includes
 #include <SHERPA/Main/Sherpa.H>
 #include <SHERPA/Initialization/Initialization_Handler.H>
@@ -26,8 +23,6 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TMatrixD.h>
-
-#pragma clang diagnostic pop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight

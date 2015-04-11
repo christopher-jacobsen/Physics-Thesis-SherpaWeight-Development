@@ -10,9 +10,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Sherpa include files
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-
 #include <SHERPA/Main/Sherpa.H>
 #include <SHERPA/PerturbativePhysics/Matrix_Element_Handler.H>
 #include <SHERPA/Initialization/Initialization_Handler.H>
@@ -28,8 +25,6 @@
 #include <PHASIC++/Process/Process_Info.H>
 #include <PHASIC++/Process/Subprocess_Info.H>
 #include <PHASIC++/Main/Process_Integrator.H>
-
-#pragma clang diagnostic pop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

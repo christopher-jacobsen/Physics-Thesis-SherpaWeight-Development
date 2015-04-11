@@ -12,9 +12,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Sherpa and Root include files
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-
 // Sherpa includes
 #include <SHERPA/Main/Sherpa.H>
 #include <ATOOLS/Org/Exception.H>
@@ -23,8 +20,6 @@
 // Root includes
 #include <TFile.h>
 #include <TTree.h>
-
-#pragma clang diagnostic pop
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaMEProgram
