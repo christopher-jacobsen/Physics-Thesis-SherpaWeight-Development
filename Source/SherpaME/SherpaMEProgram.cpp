@@ -192,16 +192,16 @@ bool SherpaMEProgram::ProcessEvent( const SherpaRootEvent & inputEvent, MERootEv
     
     // validate event
     
-    if (inputEvent.nparticle > SherpaRootEvent::max_nparticle )
-    {
-        LogMsgError( "Number of outgoing particles in event exceeds maximum. nparticles=%i (max %u).",
-                     FMT_I(inputEvent.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
-        return false;
-    }
-
     if (inputEvent.nparticle <= 0)
     {
         LogMsgWarning( "Skipping event %i. No outgoing particles.", FMT_I(inputEvent.id) );
+        return false;
+    }
+
+    if ((size_t)inputEvent.nparticle > SherpaRootEvent::max_nparticle )
+    {
+        LogMsgError( "Number of outgoing particles in event exceeds maximum. nparticles=%i (max %u).",
+                     FMT_I(inputEvent.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
         return false;
     }
 

@@ -159,7 +159,7 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
+void SherpaWeight::ReadParametersFromFile( const char * /*filePath*/ /*= nullptr*/ )
 {
     ParameterVector params;
     
@@ -212,7 +212,7 @@ void SherpaWeight::ReadParametersFromFile( const char * filePath /*= nullptr*/ )
                             ThrowError( "Could not convert string to floating point value." );  // caught below
                     }
                 }
-                catch (const std::exception & error)
+                catch (const std::exception &)
                 {
                     ThrowError( "Failed to read scale/offset for reweight parameter " + param.name );
                 }
@@ -793,7 +793,7 @@ void SherpaWeight::FeynRulesModel::CreateFeynRulesParamCard( const std::string &
     
     while (fgets( srcBuffer, (int)maxLine, local.fpSrc ) != nullptr)
     {
-        strcpy( dstBuffer, srcBuffer );  // default dst is same as src
+        strncpy( dstBuffer, srcBuffer, maxLine );  // default dst is same as src
         
         char * pSrc = srcBuffer;
         char * pDst = dstBuffer;
