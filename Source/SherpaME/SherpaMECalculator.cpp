@@ -270,16 +270,22 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
     
     ATOOLS::Flavour_Vector matchFlavours;
     {
+        size_t nIn = p_amp->NIn();
+        size_t i   = 0;
+
         const ATOOLS::ClusterLeg_Vector & legs = p_amp->Legs();
         for (const ATOOLS::Cluster_Leg * leg : legs)
-            matchFlavours.push_back( leg->Flav() );
+        {
+            ATOOLS::Flavour f = (i++ < nIn) ? leg->Flav().Bar() : leg->Flav();
+            matchFlavours.push_back( f );
+        }
     }
     
     // TODO: sorting the flavors, has a side-effect of barring the in products, and changing their order.
     // Is this required for getting the ME, or is it done when getting the ME?
     
     // TODO: consider removing (or commenting out the finding by name code
-    
+#if 0
     PHASIC::Process_Base::SortFlavours(p_amp);  // Does NOT handle Decay processes (e.g. 2 -> 2 -> 4)
 
     std::string matchName = PHASIC::Process_Base::GenerateName(p_amp);
@@ -305,6 +311,7 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
 
         return pit->second;
     }
+#endif
 
     // try to find match by legs
     
@@ -328,7 +335,7 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
             if (proc->Flavours() != matchFlavours)
                 continue;
 
-            std::cout << "Matched process " << proc->Name() << std::endl;
+            //std::cout << "Matched process " << proc->Name() << std::endl;
             return proc;
         }
     }
