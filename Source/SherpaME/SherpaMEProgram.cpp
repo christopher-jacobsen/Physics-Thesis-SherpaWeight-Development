@@ -84,10 +84,15 @@ int SherpaMEProgram::Run( const RunParameters & param )
         time_t timeStartRun = time(nullptr);
 
         // initialize sherpa
-        
-        if (!m_upSherpa->InitializeTheRun( static_cast<int>(param.argv.size()), const_cast<char **>(param.argv.data()) ))
-            ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
-        
+        {
+            std::vector<const char *> runArgv(param.argv);
+
+            runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
+
+            if (!m_upSherpa->InitializeTheRun( static_cast<int>(runArgv.size()), const_cast<char **>(runArgv.data()) ))
+                ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
+        }
+
         // open input file
 
         LogMsgInfo( "Input file : %hs", FMT_HS(param.inputRootFileName.c_str()) );
