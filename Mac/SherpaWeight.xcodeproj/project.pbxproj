@@ -17,6 +17,10 @@
 		23695DE01A8CE8180083BFAA /* MERootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */; };
 		238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */; };
 		23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23AC9D8E1A8CCD5100BD70A3 /* main.cpp */; };
+		23B379C01B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23B379BE1B0F7AF600C49A17 /* SherpaRootEventFile.cpp */; };
+		23B379C11B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23B379BE1B0F7AF600C49A17 /* SherpaRootEventFile.cpp */; };
+		23B379C41B0F7B1B00C49A17 /* HepMCEventFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23B379C21B0F7B1B00C49A17 /* HepMCEventFile.cpp */; };
+		23B379C51B0F7B1B00C49A17 /* HepMCEventFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23B379C21B0F7B1B00C49A17 /* HepMCEventFile.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +90,11 @@
 		238523111A8A9EE100CE0D2D /* SherpaEvent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SherpaEvent.h; path = ../../../../beck/AfterBurner/SherpaEvent.h; sourceTree = SOURCE_ROOT; };
 		23AC9D8C1A8CCD5100BD70A3 /* SherpaME */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SherpaME; sourceTree = BUILT_PRODUCTS_DIR; };
 		23AC9D8E1A8CCD5100BD70A3 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../Source/SherpaME/main.cpp; sourceTree = SOURCE_ROOT; };
+		23B379BE1B0F7AF600C49A17 /* SherpaRootEventFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SherpaRootEventFile.cpp; sourceTree = "<group>"; };
+		23B379BF1B0F7AF600C49A17 /* SherpaRootEventFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SherpaRootEventFile.h; sourceTree = "<group>"; };
+		23B379C21B0F7B1B00C49A17 /* HepMCEventFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HepMCEventFile.cpp; sourceTree = "<group>"; };
+		23B379C31B0F7B1B00C49A17 /* HepMCEventFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HepMCEventFile.h; sourceTree = "<group>"; };
+		23B379C61B0F7B4300C49A17 /* EventFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EventFile.h; sourceTree = "<group>"; };
 		23E1FC1A1A8A3BF600CA3DFF /* MEProcess.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MEProcess.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.C"; sourceTree = SOURCE_ROOT; };
 		23E1FC1B1A8A3BF600CA3DFF /* MEProcess.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MEProcess.H; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.H"; sourceTree = SOURCE_ROOT; };
 		23E1FC1C1A8A3BF600CA3DFF /* MEProcess.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; name = MEProcess.i; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/AddOns/Python/MEProcess.i"; sourceTree = SOURCE_ROOT; };
@@ -216,6 +225,11 @@
 				230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */,
 				23695DDE1A8CE8180083BFAA /* MERootEvent.h */,
 				23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */,
+				23B379C61B0F7B4300C49A17 /* EventFile.h */,
+				23B379BF1B0F7AF600C49A17 /* SherpaRootEventFile.h */,
+				23B379BE1B0F7AF600C49A17 /* SherpaRootEventFile.cpp */,
+				23B379C31B0F7B1B00C49A17 /* HepMCEventFile.h */,
+				23B379C21B0F7B1B00C49A17 /* HepMCEventFile.cpp */,
 			);
 			name = Common;
 			path = ../Source/Common;
@@ -291,9 +305,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23B379C41B0F7B1B00C49A17 /* HepMCEventFile.cpp in Sources */,
 				238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */,
 				230EC6E51A77A16800DC49D3 /* SherpaWeightProgram.cpp in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
+				23B379C01B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */,
 				230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */,
 				23695DDF1A8CE8180083BFAA /* MERootEvent.cpp in Sources */,
 			);
@@ -303,9 +319,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23B379C51B0F7B1B00C49A17 /* HepMCEventFile.cpp in Sources */,
 				23695DDB1A8CE0DC0083BFAA /* SherpaMECalculator.cpp in Sources */,
 				23695DDC1A8CE2460083BFAA /* SherpaRootEvent.cpp in Sources */,
 				23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */,
+				23B379C11B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */,
 				23695DDA1A8CDC3F0083BFAA /* SherpaMEProgram.cpp in Sources */,
 				23695DE01A8CE8180083BFAA /* MERootEvent.cpp in Sources */,
 			);
@@ -379,10 +397,12 @@
 					"$(inherited)",
 					/usr/local/include/root,
 					"/usr/local/include/SHERPA-MC",
+					/usr/local/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib/root,
 					"/usr/local/lib/SHERPA-MC",
+					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
@@ -417,6 +437,7 @@
 					"-lToolsPhys",
 					"-lPhasicMain",
 					"-lPhasicProcess",
+					"-lHepMC",
 				);
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;
@@ -487,10 +508,12 @@
 					"$(inherited)",
 					/usr/local/include/root,
 					"/usr/local/include/SHERPA-MC",
+					/usr/local/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib/root,
 					"/usr/local/lib/SHERPA-MC",
+					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -524,6 +547,7 @@
 					"-lToolsPhys",
 					"-lPhasicMain",
 					"-lPhasicProcess",
+					"-lHepMC",
 				);
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;

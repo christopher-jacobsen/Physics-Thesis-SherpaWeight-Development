@@ -1,0 +1,49 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//  HepMCEventFile.h
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef HEPMC_EVENT_FILE_H
+#define HEPMC_EVENT_FILE_H
+
+#include "EventFile.h"
+#include "common.h"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// forward declarations
+
+namespace HepMC
+{
+class IO_GenEvent;
+class GenParticle;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// class HepMCEventFile
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class HepMCEventFile : public EventFileInterface
+{
+public:
+    static bool IsSupported( const std::string & fileName ) throw();
+
+    HepMCEventFile();
+    virtual ~HepMCEventFile() throw() override;
+
+    virtual void Open( const std::string & fileName, OpenMode mode ) override;
+    virtual void Close() throw() override;
+
+    virtual uint64_t Count() const override;
+
+    virtual bool ReadEvent( EventFileEvent & event ) override;
+
+private:
+    static EventFileEvent::Particle ConvertParticle( const HepMC::GenParticle & part );
+
+private:
+    std::string                             m_fileName;
+    std::unique_ptr<HepMC::IO_GenEvent>     m_upIO;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#endif // HEPMC_EVENT_FILE_H
