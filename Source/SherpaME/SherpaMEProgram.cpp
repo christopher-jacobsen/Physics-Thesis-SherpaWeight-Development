@@ -21,6 +21,10 @@
 #include <TFile.h>
 #include <TTree.h>
 
+// HepMC includes
+#include <HepMC/IO_GenEvent.h>
+#include <HepMC/GenEvent.h>
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct EventFileEvent
@@ -166,7 +170,7 @@ uint64_t SherpaRootEventFile::Count() const
 bool SherpaRootEventFile::ReadEvent( EventFileEvent & event )
 {
     if (!m_pTree)
-        ThrowError( "Next() called on closed root file." );
+        ThrowError( "ReadEvent() called on closed file." );
 
     if (m_iEntry >= m_nEntries)
         return false;
@@ -264,6 +268,144 @@ bool SherpaRootEventFile::ReadEvent( EventFileEvent & event )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// forward declarations
+namespace HepMC
+{
+class IO_GenEvent;
+}
+
+class HepMCEventFile : public EventFileInterface
+{
+public:
+    static bool IsSupported( const std::string & fileName ) throw();
+
+    HepMCEventFile() = default;
+    virtual ~HepMCEventFile() throw() override;
+
+    virtual void Open( const std::string & fileName, OpenMode mode ) override;
+    virtual void Close() throw() override;
+
+    virtual uint64_t Count() const override;
+
+    virtual bool ReadEvent( EventFileEvent & event ) override;
+
+private:
+    static EventFileEvent::Particle ConvertParticle( const HepMC::GenParticle & part );
+
+private:
+    std::string     m_fileName;
+
+    std::unique_ptr<HepMC::IO_GenEvent> m_upIO;
+};
+
+HepMCEventFile::~HepMCEventFile() throw()
+{
+    Close();    // [noexcept]
+}
+
+void HepMCEventFile::Open( const std::string & fileName, OpenMode mode )
+{
+    Close();
+
+    m_fileName = fileName;
+
+    try
+    {
+        std::ios::openmode ioMode = (mode == OpenMode::Write) ? std::ios::out : std::ios::in;
+        m_upIO.reset( new HepMC::IO_GenEvent( fileName, ioMode ) );
+    }
+    catch (...)
+    {
+        LogMsgError( "Failed to construct HepMC IO object for file (%hs).", FMT_HS(m_fileName.c_str()) );
+        throw;
+    }
+}
+
+void HepMCEventFile::Close() throw()
+{
+    try
+    {
+        m_upIO.reset();
+    }
+    catch (...)
+    {
+        LogMsgError( "Unexpected exception while destructing HepMC IO object." );
+    }
+
+    m_fileName.clear();     // [noexcept]
+}
+
+uint64_t HepMCEventFile::Count() const
+{
+    return 0; // TODO
+}
+
+bool HepMCEventFile::ReadEvent( EventFileEvent & event )
+{
+    event = EventFileEvent();  // clear event
+
+    if (!m_upIO)
+        ThrowError( "ReadEvent() called on closed file." );
+
+    HepMC::GenEvent genEvent;
+
+    if (!m_upIO->fill_next_event( &genEvent ))
+        return false;  // no more events
+
+    event.eventId = genEvent.event_number();
+
+    // get signal process vertex
+    HepMC::GenVertex * pSignal = genEvent.signal_process_vertex();
+    if (!pSignal)
+        ThrowError( "Missing signal vertex for event" );
+
+    // input events
+    {
+        event.input.reserve( (size_t) std::max(pSignal->particles_in_size(), 0) );
+
+        auto itrGenPart = pSignal->particles_in_const_begin();
+        auto endGenPart = pSignal->particles_in_const_end();
+        for ( ; itrGenPart != endGenPart; ++itrGenPart)
+        {
+            const HepMC::GenParticle * pGenPart = *itrGenPart;
+            event.input.push_back( ConvertParticle( *pGenPart ) );
+        }
+    }
+
+    // output events
+    {
+        event.output.reserve( (size_t) std::max(pSignal->particles_out_size(), 0) );
+
+        auto itrGenPart = pSignal->particles_out_const_begin();
+        auto endGenPart = pSignal->particles_out_const_end();
+        for ( ; itrGenPart != endGenPart; ++itrGenPart)
+        {
+            const HepMC::GenParticle * pGenPart = *itrGenPart;
+            event.output.push_back( ConvertParticle( *pGenPart ) );
+        }
+    }
+
+    return true;
+}
+
+EventFileEvent::Particle HepMCEventFile::ConvertParticle( const HepMC::GenParticle & part )
+{
+    EventFileEvent::Particle result;
+
+	HepMC::FourVector mom = part.momentum();
+
+    result.pdg = part.pdg_id();
+    result.E   = mom.e();
+    result.px  = mom.px();
+    result.py  = mom.py();
+    result.pz  = mom.pz();
+
+    return result;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaMEProgram
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -329,7 +471,8 @@ int SherpaMEProgram::Run( const RunParameters & param )
         {
             std::vector<const char *> runArgv(param.argv);
 
-            runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
+            runArgv.push_back( "INIT_ONLY=2"   );   // prevent Sherpa from starting the cross section integration
+            runArgv.push_back( "EVENT_OUTPUT=" );   // prevent Sherpa from overwriting any event file specified in the dat file
 
             if (!m_upSherpa->InitializeTheRun( static_cast<int>(runArgv.size()), const_cast<char **>(runArgv.data()) ))
                 ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
@@ -338,7 +481,8 @@ int SherpaMEProgram::Run( const RunParameters & param )
         // open input file
 
         LogMsgInfo( "Input file : %hs", FMT_HS(param.inputRootFileName.c_str()) );
-        SherpaRootEventFile inputFile;
+        //SherpaRootEventFile inputFile;
+        HepMCEventFile inputFile;
         inputFile.Open( param.inputRootFileName, EventFileInterface::OpenMode::Read );
 
         // create output file
@@ -369,23 +513,35 @@ int SherpaMEProgram::Run( const RunParameters & param )
         
         // loop through and process each input event
 
-        const uint64_t nEntries     = inputFile.Count();
-        const uint64_t logFrequency = std::max( nEntries / 10, uint64_t(1) );
+        uint64_t    iEvent          = 0;
+        uint64_t    nEvents         = inputFile.Count();
+        uint64_t    logFrequency    = 1;
+        uint32_t    logCount        = 0;
 
-        LogMsgInfo( "\nGetting matrix elements for %llu events ...", FMT_LLU(nEntries) );
+        if (nEvents)
+            LogMsgInfo( "\nGetting matrix elements for %llu events ...", FMT_LLU(nEvents) );
+        else
+            LogMsgInfo( "\nGetting matrix elements for events ..." );
 
         time_t timeStartProcess = time(nullptr);
         
-        for (uint64_t iEntry = 0; inputFile.ReadEvent( inputEvent ); ++iEntry)
+        for ( ; inputFile.ReadEvent( inputEvent ); ++iEvent)
         {
             if (!ProcessEvent( inputEvent, outputEvent ))
                 continue;
 
-            if (iEntry % logFrequency == 0)
-                LogMsgInfo( "Event %llu (id %i): ME = %E", FMT_LLU(iEntry+1), FMT_I(inputEvent.eventId), FMT_F(outputEvent.me) );
+            if ((iEvent + 1) % logFrequency == 0)
+            {
+                LogMsgInfo( "Event %llu (id %i): ME = %E", FMT_LLU(iEvent+1), FMT_I(inputEvent.eventId), FMT_F(outputEvent.me) );
+                if (++logCount == 10)
+                {
+                    logFrequency *= 10;
+                    logCount      = 1;
+                }
+            }
 
             if (pOutputTree->Fill() < 0)
-                ThrowError( "Fill failed on entry " + std::to_string(iEntry+1) );
+                ThrowError( "Fill failed on event " + std::to_string(iEvent+1) );
         }
 
         // write and close the output file (not really necessary as would be done in destructor)
@@ -395,7 +551,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
 
         time_t timeStopProcess = time(nullptr);
 
-        LogMsgInfo( "%llu events completed. (%u seconds)", FMT_LLU(nEntries), FMT_U(timeStopProcess - timeStartProcess) );
+        LogMsgInfo( "%llu events completed. (%u seconds)", FMT_LLU(iEvent), FMT_U(timeStopProcess - timeStartProcess) );
         LogMsgInfo( "Done. (%u seconds)", FMT_U(timeStopProcess - timeStartRun) );
 
         return EXIT_SUCCESS;
