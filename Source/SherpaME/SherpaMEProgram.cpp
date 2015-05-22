@@ -22,6 +22,248 @@
 #include <TTree.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct EventFileEvent
+{
+    struct Particle
+    {
+        int32_t pdg;
+
+        double  E;
+        double  px;
+        double  py;
+        double  pz;
+    };
+
+    int32_t                 eventId;
+    std::vector<Particle>   input;
+    std::vector<Particle>   output;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct EventFileInterface
+{
+    enum class OpenMode
+    {
+        Read,
+        Write
+    };
+
+    virtual ~EventFileInterface() throw()   = default;
+
+    virtual void Open( const std::string & fileName, OpenMode mode )   = 0;
+    virtual void Close() throw()        = 0;
+
+    virtual uint64_t Count() const      = 0;
+
+    virtual bool ReadEvent( EventFileEvent & event ) = 0;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SherpaRootEventFile : public EventFileInterface
+{
+public:
+    static bool IsSupported( const std::string & fileName ) throw();
+
+    SherpaRootEventFile() = default;
+    virtual ~SherpaRootEventFile() throw() override;
+
+    virtual void Open( const std::string & fileName, OpenMode mode ) override;
+    virtual void Close() throw() override;
+
+    virtual uint64_t Count() const override;
+
+    virtual bool ReadEvent( EventFileEvent & event ) override;
+
+private:
+    std::string             m_fileName;
+
+    std::unique_ptr<TFile>  m_upFile;
+    TTree *                 m_pTree     = nullptr;
+
+    SherpaRootEvent         m_event;
+    Long64_t                m_nEntries  = 0;
+    Long64_t                m_iEntry    = 0;
+};
+
+SherpaRootEventFile::~SherpaRootEventFile() throw()
+{
+    Close();    // [noexcept]
+}
+
+void SherpaRootEventFile::Open( const std::string & fileName, OpenMode mode )
+{
+    Close();
+
+    m_fileName = fileName;
+
+    try
+    {
+        m_upFile.reset( new TFile( fileName.c_str() ) );
+    }
+    catch (...)
+    {
+        LogMsgError( "Failed to construct root object for file (%hs).", FMT_HS(m_fileName.c_str()) );
+        throw;
+    }
+
+    if (m_upFile->IsZombie() || !m_upFile->IsOpen())      // IsZombie is true if constructor failed
+    {
+        LogMsgError( "Failed to open root file (%hs).", FMT_HS(m_fileName.c_str()) );
+        ThrowError( std::invalid_argument( m_fileName ) );
+    }
+
+    if (mode == OpenMode::Read)
+    {
+        m_upFile->GetObject( "t3", m_pTree );
+        if (!m_pTree)
+        {
+            LogMsgError( "Failed to load tree (t3) in root file (%hs).", FMT_HS(m_fileName.c_str()) );
+            ThrowError( std::invalid_argument( m_fileName ) );
+        }
+
+        m_event.SetInputTree( m_pTree );
+
+        m_nEntries = m_pTree->GetEntries();
+    }
+}
+
+void SherpaRootEventFile::Close() throw()
+{
+    m_nEntries  = 0;
+    m_iEntry    = 0;
+    m_pTree     = nullptr;
+
+    try
+    {
+        if (m_upFile)
+            m_upFile->Close();
+    }
+    catch (...)
+    {
+        LogMsgError( "Unexpected exception while closing root file (%hs).", FMT_HS(m_fileName.c_str()) );
+    }
+
+    try
+    {
+        m_upFile.reset();
+    }
+    catch (...)
+    {
+        LogMsgError( "Unexpected exception while destructing root file object." );
+    }
+
+    m_fileName.clear();     // [noexcept]
+}
+
+uint64_t SherpaRootEventFile::Count() const
+{
+    return static_cast<uint64_t>( std::max(m_nEntries, Long64_t(0)) );
+}
+
+bool SherpaRootEventFile::ReadEvent( EventFileEvent & event )
+{
+    if (!m_pTree)
+        ThrowError( "Next() called on closed root file." );
+
+    if (m_iEntry >= m_nEntries)
+        return false;
+
+    if (m_pTree->LoadTree(m_iEntry) < 0)
+        ThrowError( "LoadTree failed on entry " + std::to_string(m_iEntry+1) );
+
+    if (m_pTree->GetEntry(m_iEntry) < 0)
+        ThrowError( "GetEntry failed on entry " + std::to_string(m_iEntry+1) );
+
+    ++m_iEntry;
+
+    // fill in event
+
+    if (m_event.nparticle <= 0)
+        ThrowError( "No outgoing particles in event id " + std::to_string(m_event.id) );
+
+    if ((size_t)m_event.nparticle > SherpaRootEvent::max_nparticle )
+    {
+        LogMsgError( "Number of outgoing particles in event id %i exceeds maximum. nparticles=%i (max %u).",
+                     FMT_I(m_event.id), FMT_I(m_event.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
+        ThrowError( "Number of outgoing particles in event exceeds maximum." );
+    }
+
+    event.eventId = m_event.id;
+
+    size_t nOutput = static_cast<size_t>(m_event.nparticle);
+    event.output.resize( nOutput );
+
+    double E_out  = 0;
+    double pz_out = 0;
+
+    for (size_t i = 0; i < nOutput; ++i)
+    {
+        EventFileEvent::Particle & particle = event.output[i];
+
+        particle.pdg = m_event.kf[i];
+        particle.E   = m_event.E [i];
+        particle.px  = m_event.px[i];
+        particle.py  = m_event.py[i];
+        particle.pz  = m_event.pz[i];
+
+        E_out  += particle.E;
+        pz_out += particle.pz;
+    }
+
+    {
+        event.input.resize(2);
+
+        EventFileEvent::Particle & in1 = event.input[0];
+        EventFileEvent::Particle & in2 = event.input[1];
+
+        in1.pdg = m_event.id1;
+        in2.pdg = m_event.id2;
+
+        // assume massless incoming partons
+        double E1 = (E_out + pz_out) / 2;
+        double E2 = (E_out - pz_out) / 2;
+
+        in1.E  =  E1;
+        in2.E  =  E2;
+
+        in1.pz =  E1;
+        in2.pz = -E2;
+
+        in1.px = 0;
+        in2.px = 0;
+
+        in1.py = 0;
+        in2.py = 0;
+
+        /* TODO
+        {
+            // validate assumptions and calculation
+    
+            ATOOLS::Vec4D P_in    = P_in1 + P_in2;
+            ATOOLS::Vec4D P_delta = P_out - P_in;
+        
+            double mass_in = P_in.Mass();
+            double mass_delta = mass_in - mass;
+
+            if ((fabs(P_delta[0]) > 0.001) ||
+                (fabs(P_delta[1]) > 0.001) ||
+                (fabs(P_delta[2]) > 0.001) ||
+                (fabs(P_delta[3]) > 0.001) ||
+                (fabs(mass_delta) > 0.001))
+            {
+                LogMsgWarning( "Massless approximation does not hold in event %i", FMT_I(inputEvent.id) );
+            }
+        }
+        */
+    }
+
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaMEProgram
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,12 +338,8 @@ int SherpaMEProgram::Run( const RunParameters & param )
         // open input file
 
         LogMsgInfo( "Input file : %hs", FMT_HS(param.inputRootFileName.c_str()) );
-        std::unique_ptr<TFile> upInputFile( new TFile( param.inputRootFileName.c_str() ) );
-        if (upInputFile->IsZombie() || !upInputFile->IsOpen())      // IsZombie is true if constructor failed
-        {
-            LogMsgError( "Failed to open input file (%hs).", FMT_HS(param.inputRootFileName.c_str()) );
-            ThrowError( std::invalid_argument( param.inputRootFileName ) );
-        }
+        SherpaRootEventFile inputFile;
+        inputFile.Open( param.inputRootFileName, EventFileInterface::OpenMode::Read );
 
         // create output file
 
@@ -112,13 +350,6 @@ int SherpaMEProgram::Run( const RunParameters & param )
             LogMsgError( "Failed to create output file (%hs).", FMT_HS(param.outputRootFileName.c_str()) );
             ThrowError( std::invalid_argument( param.outputRootFileName ) );
         }
-
-        // get and setup input tree
-
-        TTree * pInputTree = nullptr;
-        upInputFile->GetObject( "t3", pInputTree );
-        if (!pInputTree)
-            ThrowError( "Failed to load input tree." );
 
         // create output tree
 
@@ -131,34 +362,27 @@ int SherpaMEProgram::Run( const RunParameters & param )
 
         // create event containers and connect/declare variables
 
-        SherpaRootEvent inputEvent;
+        EventFileEvent  inputEvent;
         MERootEvent     outputEvent;
-        
-        inputEvent.SetInputTree(   pInputTree  );
+
         outputEvent.SetOutputTree( pOutputTree );
         
         // loop through and process each input event
 
-        const Long64_t nEntries     = pInputTree->GetEntries();
-        const Long64_t logFrequency = std::max( nEntries / 10, Long64_t(1) );
+        const uint64_t nEntries     = inputFile.Count();
+        const uint64_t logFrequency = std::max( nEntries / 10, uint64_t(1) );
 
-        LogMsgInfo( "\nGetting matrix elements for %lli events ...", FMT_LLI(nEntries) );
+        LogMsgInfo( "\nGetting matrix elements for %llu events ...", FMT_LLU(nEntries) );
 
         time_t timeStartProcess = time(nullptr);
         
-        for (Long64_t iEntry = 0; iEntry < nEntries; ++iEntry)
+        for (uint64_t iEntry = 0; inputFile.ReadEvent( inputEvent ); ++iEntry)
         {
-            if (pInputTree->LoadTree(iEntry) < 0)
-                ThrowError( "LoadTree failed on entry " + std::to_string(iEntry+1) );
-            
-            if (pInputTree->GetEntry(iEntry) < 0)
-                ThrowError( "GetEntry failed on entry " + std::to_string(iEntry+1) );
-            
             if (!ProcessEvent( inputEvent, outputEvent ))
                 continue;
 
             if (iEntry % logFrequency == 0)
-                LogMsgInfo( "Event %lli (id %i): ME = %E", FMT_LLI(iEntry+1), FMT_I(inputEvent.id), FMT_F(outputEvent.me) );
+                LogMsgInfo( "Event %llu (id %i): ME = %E", FMT_LLU(iEntry+1), FMT_I(inputEvent.eventId), FMT_F(outputEvent.me) );
 
             if (pOutputTree->Fill() < 0)
                 ThrowError( "Fill failed on entry " + std::to_string(iEntry+1) );
@@ -171,7 +395,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
 
         time_t timeStopProcess = time(nullptr);
 
-        LogMsgInfo( "%lli events completed. (%u seconds)", FMT_LLI(nEntries), FMT_U(timeStopProcess - timeStartProcess) );
+        LogMsgInfo( "%llu events completed. (%u seconds)", FMT_LLU(nEntries), FMT_U(timeStopProcess - timeStartProcess) );
         LogMsgInfo( "Done. (%u seconds)", FMT_U(timeStopProcess - timeStartRun) );
 
         return EXIT_SUCCESS;
@@ -186,108 +410,38 @@ int SherpaMEProgram::Run( const RunParameters & param )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-bool SherpaMEProgram::ProcessEvent( const SherpaRootEvent & inputEvent, MERootEvent & outputEvent )
+bool SherpaMEProgram::ProcessEvent( const EventFileEvent & inputEvent, MERootEvent & outputEvent )
 {
     outputEvent = MERootEvent();  // clear values
-    
-    // validate event
-    
-    if (inputEvent.nparticle <= 0)
-    {
-        LogMsgWarning( "Skipping event %i. No outgoing particles.", FMT_I(inputEvent.id) );
-        return false;
-    }
 
-    if ((size_t)inputEvent.nparticle > SherpaRootEvent::max_nparticle )
-    {
-        LogMsgError( "Number of outgoing particles in event exceeds maximum. nparticles=%i (max %u).",
-                     FMT_I(inputEvent.nparticle), FMT_U(SherpaRootEvent::max_nparticle) );
-        return false;
-    }
-
-    // calculate incoming 4-momentum
-    ATOOLS::Vec4D P_in1, P_in2;
-    {
-        ATOOLS::Vec4D P_out;
-        for (Int_t i = 0; i < inputEvent.nparticle; ++i)
-        {
-            ATOOLS::Vec4D P_part( inputEvent.E[i], inputEvent.px[i], inputEvent.py[i], inputEvent.pz[i] );
-            P_out += P_part;
-        }
-        
-        double mass = P_out.Mass();
-        //double tau  = event.x1 * event.x2;          // x1 * x2 = mass^2 / s = tau
-        //double s    = mass * mass / tau;
-        //double P    = sqrt(s/4-1);                  // P = proton momentum, s = 4(M_p^2 + P^2)
-        //double pz1  =  event.x1 * P;
-        //double pz2  = -event.x2 * P;
-        
-        // mass^2 = (e1+e2)^2-(pz1+pz2)^2 = (x1+x2)^2 * P^2 - x^2 * P^2
-
-        // assume massless incoming partons
-        
-        double E1 = (P_out[0] + P_out[3]) / 2;
-        double E2 = (P_out[0] - P_out[3]) / 2;
-
-        P_in1[0] = E1; //pz1;   // fabs(pz1)
-        P_in1[3] = E1; //pz1;
-
-        P_in2[0] =  E2; //-pz2;  // fabs(pz2)
-        P_in2[3] = -E2; // pz2;
-        /*
-        P_in1[0] = pz1;   // fabs(pz1)
-        P_in1[3] = pz1;
-
-        P_in2[0] = -pz2;  // fabs(pz2)
-        P_in2[3] =  pz2;
-        */
-        {
-            // validate assumptions and calculation
-    
-            ATOOLS::Vec4D P_in    = P_in1 + P_in2;
-            ATOOLS::Vec4D P_delta = P_out - P_in;
-        
-            double mass_in = P_in.Mass();
-            double mass_delta = mass_in - mass;
-
-            if ((fabs(P_delta[0]) > 0.001) ||
-                (fabs(P_delta[1]) > 0.001) ||
-                (fabs(P_delta[2]) > 0.001) ||
-                (fabs(P_delta[3]) > 0.001) ||
-                (fabs(mass_delta) > 0.001))
-            {
-                LogMsgWarning( "Massless approximation does not hold in event %i", FMT_I(inputEvent.id) );
-            }
-        }
-    }
-    
     // define the flavors and momenta
     std::vector<int>     particles;
     ATOOLS::Vec4D_Vector momenta;
     {
-        particles.push_back( inputEvent.id1 );
-        particles.push_back( inputEvent.id2 );
-        
-        momenta.push_back( P_in1 );
-        momenta.push_back( P_in2 );
-
-        for (Int_t i = 0; i < inputEvent.nparticle; ++i)
+        for (const EventFileEvent::Particle & part : inputEvent.input)
         {
-            Int_t code = inputEvent.kf[i];
-            particles.push_back( code );
-            
-            ATOOLS::Vec4D P_part( inputEvent.E[i], inputEvent.px[i], inputEvent.py[i], inputEvent.pz[i] );
-            momenta.push_back( P_part );
+            ATOOLS::Vec4D P_part( part.E, part.px, part.py, part.pz );
+
+            particles.push_back( part.pdg );
+            momenta  .push_back( P_part   );
+        }
+
+        for (const EventFileEvent::Particle & part : inputEvent.output)
+        {
+            ATOOLS::Vec4D P_part( part.E, part.px, part.py, part.pz );
+
+            particles.push_back( part.pdg );
+            momenta  .push_back( P_part   );
         }
     }
 
     // get the matrix element for the event
 
-    double me = GetEventME( 2, particles, momenta );
+    double me = GetEventME( inputEvent.input.size(), particles, momenta );
 
-    outputEvent.id = inputEvent.id;
+    outputEvent.id = inputEvent.eventId;
     outputEvent.me = me;
-    
+
     return true;
 }
 
