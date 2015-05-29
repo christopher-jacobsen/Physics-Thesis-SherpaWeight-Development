@@ -66,9 +66,10 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
 
         std::vector<const char *> runArgv(m_argv);
 
-        runArgv.push_back( "OUTPUT=0"    ); // only error output
-        runArgv.push_back( "LOG_FILE="   ); // no log file
-        runArgv.push_back( "INIT_ONLY=2" ); // prevent Sherpa from starting the cross section integration
+        runArgv.push_back( "OUTPUT=0"      );   // only error output
+        runArgv.push_back( "LOG_FILE="     );   // no log file
+        runArgv.push_back( "INIT_ONLY=2"   );   // prevent Sherpa from starting the cross section integration
+        runArgv.push_back( "EVENT_OUTPUT=" );   // prevent Sherpa from overwriting any event file specified in the dat file
 
         if (!m_upSherpa->InitializeTheRun( static_cast<int>(runArgv.size()), const_cast<char **>(runArgv.data()) ))
             ThrowError( "Failed to initialize Sherpa framework. Check Run.dat file." );
@@ -367,7 +368,7 @@ const SherpaWeight::DoubleVector & SherpaWeight::MatrixElements( int32_t eventId
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-const SherpaWeight::DoubleVector SherpaWeight::CoefficientValues( int32_t eventId ) const
+SherpaWeight::DoubleVector SherpaWeight::CoefficientValues( int32_t eventId ) const
 {
     DoubleVector coefs;
     

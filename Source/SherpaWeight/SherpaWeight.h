@@ -81,7 +81,7 @@ public:     ////// public methods //////
     void EvaluateEvents();
 
     const DoubleVector & MatrixElements(    int32_t eventId ) const;
-    const DoubleVector   CoefficientValues( int32_t eventId ) const;
+    DoubleVector         CoefficientValues( int32_t eventId ) const;
 
     
     static void GetBilinearMatrices( const ParameterVector & parameters, DoubleMatrix & evalMatrix,
