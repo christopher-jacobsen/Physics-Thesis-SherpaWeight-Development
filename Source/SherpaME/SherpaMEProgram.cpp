@@ -123,16 +123,18 @@ int SherpaMEProgram::Run( const RunParameters & param )
         pOutputTree->SetDirectory( upOutputFile.get() );   // attach to output file, output file now owns tree and will call delete
         pOutputTree->SetAutoSave(0);                       // disable autosave
 
-        // create event containers and connect/declare variables
+        // create event containers
 
-        EventFileEvent  inputEvent;
-        MERootEvent     outputEvent;
+        EventFileEvent::UniquePtr   upInputEvent    = inputFile.AllocateEvent();
+        EventFileEvent &            inputEvent      = *upInputEvent;
+        EventFileVertex             inputVertex;
+        MERootEvent                 outputEvent;
 
         outputEvent.SetOutputTree( pOutputTree );
         
         // loop through and process each input event
 
-        uint64_t    iEvent          = 0;
+        uint64_t    iEvent          = 1;
         uint64_t    nEvents         = inputFile.Count();
         uint64_t    logFrequency    = 1;
         uint32_t    logCount        = 0;
@@ -146,21 +148,24 @@ int SherpaMEProgram::Run( const RunParameters & param )
         
         for ( ; inputFile.ReadEvent( inputEvent ); ++iEvent)
         {
-            if (!ProcessEvent( inputEvent, outputEvent ))
+            inputEvent.GetSignalVertex( inputVertex );
+
+            if (!ProcessEvent( inputEvent.eventId, inputVertex, outputEvent ))
                 continue;
 
-            if ((iEvent + 1) % logFrequency == 0)
+            if (iEvent % logFrequency == 0)
             {
-                LogMsgInfo( "Event %llu (id %i): ME = %E", FMT_LLU(iEvent+1), FMT_I(inputEvent.eventId), FMT_F(outputEvent.me) );
                 if (++logCount == 10)
                 {
                     logFrequency *= 10;
                     logCount      = 1;
                 }
+
+                LogMsgInfo( "Event %llu (id %i): ME = %E", FMT_LLU(iEvent), FMT_I(upInputEvent->eventId), FMT_F(outputEvent.me) );
             }
 
             if (pOutputTree->Fill() < 0)
-                ThrowError( "Fill failed on event " + std::to_string(iEvent+1) );
+                ThrowError( "Fill failed on event " + std::to_string(iEvent) );
         }
 
         // write and close the output file (not really necessary as would be done in destructor)
@@ -170,7 +175,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
 
         time_t timeStopProcess = time(nullptr);
 
-        LogMsgInfo( "%llu events completed. (%u seconds)", FMT_LLU(iEvent), FMT_U(timeStopProcess - timeStartProcess) );
+        LogMsgInfo( "%llu events completed. (%u seconds)", FMT_LLU(iEvent-1), FMT_U(timeStopProcess - timeStartProcess) );
         LogMsgInfo( "Done. (%u seconds)", FMT_U(timeStopProcess - timeStartRun) );
 
         return EXIT_SUCCESS;
@@ -185,7 +190,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-bool SherpaMEProgram::ProcessEvent( const EventFileEvent & inputEvent, MERootEvent & outputEvent )
+bool SherpaMEProgram::ProcessEvent( int32_t eventId, const EventFileVertex & inputEvent, MERootEvent & outputEvent )
 {
     outputEvent = MERootEvent();  // clear values
 
@@ -193,7 +198,7 @@ bool SherpaMEProgram::ProcessEvent( const EventFileEvent & inputEvent, MERootEve
     std::vector<int>     particles;
     ATOOLS::Vec4D_Vector momenta;
     {
-        for (const EventFileEvent::Particle & part : inputEvent.input)
+        for (const EventFileVertex::Particle & part : inputEvent.input)
         {
             ATOOLS::Vec4D P_part( part.E, part.px, part.py, part.pz );
 
@@ -201,7 +206,7 @@ bool SherpaMEProgram::ProcessEvent( const EventFileEvent & inputEvent, MERootEve
             momenta  .push_back( P_part   );
         }
 
-        for (const EventFileEvent::Particle & part : inputEvent.output)
+        for (const EventFileVertex::Particle & part : inputEvent.output)
         {
             ATOOLS::Vec4D P_part( part.E, part.px, part.py, part.pz );
 
@@ -214,7 +219,7 @@ bool SherpaMEProgram::ProcessEvent( const EventFileEvent & inputEvent, MERootEve
 
     double me = GetEventME( inputEvent.input.size(), particles, momenta );
 
-    outputEvent.id = inputEvent.eventId;
+    outputEvent.id = eventId;
     outputEvent.me = me;
 
     return true;

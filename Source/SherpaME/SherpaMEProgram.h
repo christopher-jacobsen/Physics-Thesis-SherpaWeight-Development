@@ -24,7 +24,7 @@ typedef Vec4<double>            Vec4D;
 typedef std::vector<Vec4D>      Vec4D_Vector;
 }
 
-struct EventFileEvent;
+struct EventFileVertex;
 struct MERootEvent;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ public:
     int Run( const RunParameters & param );
     
 private:
-    bool ProcessEvent( const EventFileEvent & inputEvent, MERootEvent & outputEvent );     // returns true if valid outputEvent generated
+    bool ProcessEvent( int32_t eventId, const EventFileVertex & inputEvent, MERootEvent & outputEvent );     // returns true if valid outputEvent generated
 
     double GetEventME( size_t nInParticles, const std::vector<int> & particleCodes, const ATOOLS::Vec4D_Vector & particleMomenta );
     
