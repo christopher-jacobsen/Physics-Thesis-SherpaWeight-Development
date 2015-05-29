@@ -7,8 +7,8 @@
 
 #include "EventFile.h"
 
-#include "common.h"
 #include "SherpaRootEvent.h"
+#include "common.h"
 
 #include <Rtypes.h>
 
@@ -29,6 +29,8 @@ public:
     SherpaRootEventFile() = default;
     virtual ~SherpaRootEventFile() throw() override;
 
+    virtual EventFileEvent::UniquePtr AllocateEvent() const override;
+
     virtual void Open( const std::string & fileName, OpenMode mode ) override;
     virtual void Close() throw() override;
 
@@ -36,15 +38,22 @@ public:
 
     virtual bool ReadEvent( EventFileEvent & event ) override;
 
+    virtual void SetCoefficientNames( const StringVector & coefNames ) override;
+
+    virtual void WriteEvent( const EventFileEvent & event ) override;
+
 private:
-    std::string             m_fileName;
+    std::string                     m_fileName;
+    OpenMode                        m_mode      = OpenMode::Read;
 
-    std::unique_ptr<TFile>  m_upFile;
-    TTree *                 m_pTree     = nullptr;
+    std::unique_ptr<TFile>          m_upFile;
+    TTree *                         m_pTree     = nullptr;
 
-    SherpaRootEvent         m_event;
-    Long64_t                m_nEntries  = 0;
-    Long64_t                m_iEntry    = 0;
+    Long64_t                        m_nEntries  = 0;
+    Long64_t                        m_iEntry    = 0;
+
+    SherpaRootEvent                 m_event;
+    EventFileEvent::DoubleVector    m_coefs;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

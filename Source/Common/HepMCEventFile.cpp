@@ -11,6 +11,30 @@
 #include <HepMC/GenEvent.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// class HepMCEventFileEvent
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class HepMCEventFileEvent : public EventFileEvent
+{
+public:
+    HepMCEventFileEvent();
+
+    virtual void Clear() override;
+
+    virtual void GetSignalVertex( EventFileVertex & vertex ) const override;
+
+    virtual void SetCoefficients( const DoubleVector & coefs ) override;
+
+private:
+    static EventFileVertex::Particle ConvertParticle( const HepMC::GenParticle & part );
+
+private:
+    std::unique_ptr<HepMC::GenEvent>    m_upGenEvent;
+
+    friend HepMCEventFile;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // class HepMCEventFile
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -23,6 +47,12 @@ HepMCEventFile::HepMCEventFile()
 HepMCEventFile::~HepMCEventFile() throw()
 {
     Close();    // [noexcept]
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+EventFileEvent::UniquePtr HepMCEventFile::AllocateEvent() const
+{
+    return EventFileEvent::UniquePtr( new HepMCEventFileEvent );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,62 +92,129 @@ void HepMCEventFile::Close() throw()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 uint64_t HepMCEventFile::Count() const
 {
-    return 0; // TODO
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-bool HepMCEventFile::ReadEvent( EventFileEvent & event )
+bool HepMCEventFile::ReadEvent( EventFileEvent & vEvent )
 {
-    event = EventFileEvent();  // clear event
+    HepMCEventFileEvent & event = static_cast<HepMCEventFileEvent &>(vEvent);
+
+    event.Clear();  // clear event
 
     if (!m_upIO)
         ThrowError( "ReadEvent() called on closed file." );
 
-    HepMC::GenEvent genEvent;
+    HepMC::GenEvent & genEvent = *event.m_upGenEvent;
 
     if (!m_upIO->fill_next_event( &genEvent ))
         return false;  // no more events
 
     event.eventId = genEvent.event_number();
 
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void HepMCEventFile::SetCoefficientNames( const StringVector & coefNames )
+{
+    if (coefNames.empty())
+        ThrowError( "Called SetCoefficientNames() with empty string vector." );
+
+//    if (!m_coefs.empty())
+//        ThrowError( "SetCoefficientNames() must only be called once and before WriteEvent()." );
+
+//    m_coefs.resize( coefNames.size() );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void HepMCEventFile::WriteEvent( const EventFileEvent & vEvent )
+{
+    const HepMCEventFileEvent & event = static_cast<const HepMCEventFileEvent &>(vEvent);
+
+    if (!event.m_upGenEvent)
+        ThrowError( "WriteEvent() called on uninitialized event." );
+
+    if (!m_upIO)
+        ThrowError( "WriteEvent() called on closed file." );
+
+    m_upIO->write_event( event.m_upGenEvent.get() );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// class HepMCEventFileEvent
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+HepMCEventFileEvent::HepMCEventFileEvent()
+{
+    Clear();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void HepMCEventFileEvent::Clear()
+{
+    eventId = 0;
+
+    if (!m_upGenEvent)
+        m_upGenEvent.reset( new HepMC::GenEvent );
+
+    m_upGenEvent->clear();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void HepMCEventFileEvent::GetSignalVertex( EventFileVertex & vertex ) const
+{
+    vertex = EventFileVertex();  // clear vertex
+
+    if (!m_upGenEvent)
+        ThrowError( "GetSignalVertex() called on uninitialized event." );
+
     // get signal process vertex
-    HepMC::GenVertex * pSignal = genEvent.signal_process_vertex();
+    HepMC::GenVertex * pSignal = m_upGenEvent->signal_process_vertex();
     if (!pSignal)
-        ThrowError( "Missing signal vertex for event" );
+        ThrowError( "Missing signal vertex for event." );
 
     // input events
     {
-        event.input.reserve( (size_t) std::max(pSignal->particles_in_size(), 0) );
+        vertex.input.reserve( (size_t) std::max(pSignal->particles_in_size(), 0) );
 
         auto itrGenPart = pSignal->particles_in_const_begin();
         auto endGenPart = pSignal->particles_in_const_end();
         for ( ; itrGenPart != endGenPart; ++itrGenPart)
         {
             const HepMC::GenParticle * pGenPart = *itrGenPart;
-            event.input.push_back( ConvertParticle( *pGenPart ) );
+            vertex.input.push_back( ConvertParticle( *pGenPart ) );
         }
     }
 
     // output events
     {
-        event.output.reserve( (size_t) std::max(pSignal->particles_out_size(), 0) );
+        vertex.output.reserve( (size_t) std::max(pSignal->particles_out_size(), 0) );
 
         auto itrGenPart = pSignal->particles_out_const_begin();
         auto endGenPart = pSignal->particles_out_const_end();
         for ( ; itrGenPart != endGenPart; ++itrGenPart)
         {
             const HepMC::GenParticle * pGenPart = *itrGenPart;
-            event.output.push_back( ConvertParticle( *pGenPart ) );
+            vertex.output.push_back( ConvertParticle( *pGenPart ) );
         }
     }
-
-    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-EventFileEvent::Particle HepMCEventFile::ConvertParticle( const HepMC::GenParticle & part )
+void HepMCEventFileEvent::SetCoefficients( const DoubleVector & coefs )
 {
-    EventFileEvent::Particle result;
+    HepMC::WeightContainer & weights = m_upGenEvent->weights();
+
+    for (double c : coefs)
+        weights.push_back(c);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+EventFileVertex::Particle HepMCEventFileEvent::ConvertParticle( const HepMC::GenParticle & part )
+{
+    EventFileVertex::Particle result;
 
 	HepMC::FourVector mom = part.momentum();
 
@@ -129,4 +226,3 @@ EventFileEvent::Particle HepMCEventFile::ConvertParticle( const HepMC::GenPartic
 
     return result;
 }
-

@@ -14,7 +14,6 @@
 namespace HepMC
 {
 class IO_GenEvent;
-class GenParticle;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,6 +28,8 @@ public:
     HepMCEventFile();
     virtual ~HepMCEventFile() throw() override;
 
+    virtual EventFileEvent::UniquePtr AllocateEvent() const override;
+
     virtual void Open( const std::string & fileName, OpenMode mode ) override;
     virtual void Close() throw() override;
 
@@ -36,8 +37,9 @@ public:
 
     virtual bool ReadEvent( EventFileEvent & event ) override;
 
-private:
-    static EventFileEvent::Particle ConvertParticle( const HepMC::GenParticle & part );
+    virtual void SetCoefficientNames( const StringVector & coefNames )  override;
+
+    virtual void WriteEvent( const EventFileEvent & event ) override;
 
 private:
     std::string                             m_fileName;
