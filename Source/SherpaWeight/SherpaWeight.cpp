@@ -905,17 +905,20 @@ void SherpaWeight::UFOModel::ValidateParameters( const ParameterVector & params 
 
     for (const ReweightParameter & p : params)
     {
-        char block[121] = {};       // 1 extra for null character
-        int  id         = 0;
-        int  readCount  = 0;
-
-        if (sscanf( p.name.c_str(), "%120[^[][%i]%n", static_cast<char *>(block), static_cast<int *>(&id), static_cast<int *>(&readCount) ) == 2)
+        if (p.name.find_first_of("[]") != std::string::npos)  // if a block name
         {
-            if (readCount == (int)p.name.size())
-                continue;   // this name is valid
-        }
+            char block[121] = {};       // 1 extra for null character
+            int  id         = 0;
+            int  readCount  = 0;
 
-        invalidParam.insert( p.name );
+            if (sscanf( p.name.c_str(), "%120[^[][%i]%n", static_cast<char *>(block), static_cast<int *>(&id), static_cast<int *>(&readCount) ) == 2)
+            {
+                if (readCount == (int)p.name.size())
+                    continue;   // this name is valid
+            }
+
+            invalidParam.insert( p.name );
+        }
     }
 
     if (!invalidParam.empty())
@@ -1031,35 +1034,53 @@ void SherpaWeight::UFOModel::CreateUFOParamCard( const std::string & srcFilePath
         {
             int    id    = 0;
             double value = 0.0;
+            char   commentName[121] = {};   // 1 extra for null character
 
-            if (sscanf( pSrc, "%i %lf", static_cast<int *>(&id), static_cast<double *>(&value) ) != 2)
+            int fieldCount = sscanf( pSrc, "%i %lf # %120s", static_cast<int *>(&id),
+                                                             static_cast<double *>(&value),
+                                                             static_cast<char *>(commentName) );
+
+            if ((fieldCount != 2) && (fieldCount != 3))
             {
                 blockName.clear();
                 goto PUT_LINE;
             }
 
+            if (fieldCount != 3)
+                commentName[0] = 0;  // ensure comment empty if not present
+
             for (size_t i = 0; i < parameters.size(); ++i)
             {
-                // search for a matching block name and index
+                const std::string & paramName = parameters[i].name;
 
-                const char * paramName = parameters[i].name.c_str();
+                if (paramName.find_first_of("[]") != std::string::npos)  // if parameter name is a block name and id
+                {
+                    // check for a matching block name and id
+                    
+                    if (strncmp( paramName.c_str(), blockName.c_str(), blockName.size() ) != 0)
+                        continue;
 
-                if (strncmp( paramName, blockName.c_str(), blockName.size() ) != 0)
-                    continue;
+                    const char * paramSuffix = paramName.c_str() + blockName.size();
+                    int paramId = 0;
+                    if (sscanf( paramSuffix, "[%i]", static_cast<int *>(&paramId) ) != 1)
+                        continue;
 
-                const char * paramSuffix = paramName + blockName.size();
-                int paramId = 0;
-                if (sscanf( paramSuffix, "[%i]", static_cast<int *>(&paramId) ) != 1)
-                    continue;
-
-                if (id != paramId)
-                    continue;
+                    if (id != paramId)
+                        continue;
+                }
+                else
+                {
+                    // check for a matching comment name
+                    if (paramName != commentName)
+                        continue;
+                }
 
                 // replace value
                 value = paramValues[i];
-                sprintf( pDst, "\t%i %.13E\n", FMT_I(id), FMT_F(value) );
+                const char * format = commentName[0] ? "\t%i %.13E\t# %s\n" : "\t%i %.13E\n";
+                sprintf( pDst, format, FMT_I(id), FMT_F(value), FMT_HS(commentName) );
 
-                remainingNames.erase( parameters[i].name );
+                remainingNames.erase( paramName );
 
                 break;
             }
