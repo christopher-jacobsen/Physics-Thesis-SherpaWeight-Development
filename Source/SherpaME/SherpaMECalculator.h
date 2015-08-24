@@ -81,7 +81,7 @@ public:
                                         const double & py, const double & pz);
     void SetMomentum(const size_t & id, const ATOOLS::Vec4D & p);
 
-    MODEL::ScalarConstantsMap * GetModelScalarConstants();
+  //MODEL::ScalarConstantsMap * GetModelScalarConstants();
 
     double MatrixElement();
     double CSMatrixElement();

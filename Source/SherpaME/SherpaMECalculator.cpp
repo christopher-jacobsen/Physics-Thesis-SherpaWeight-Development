@@ -441,10 +441,12 @@ void SherpaMECalculator::Initialize()
     SetMomentumIndices(allpdgs);
 }
 
+/*
 MODEL::ScalarConstantsMap * SherpaMECalculator::GetModelScalarConstants()
 {
     return p_gen->GetInitHandler()->GetModel()->GetScalarConstants();
 }
+*/
 
 double SherpaMECalculator::MatrixElement()
 {
