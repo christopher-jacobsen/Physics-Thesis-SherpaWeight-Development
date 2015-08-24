@@ -66,6 +66,7 @@
 		232B886F1A784EBF009534D6 /* test.py.in */ = {isa = PBXFileReference; lastKnownFileType = text; name = test.py.in; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/Examples/API/ME2-Python/test.py.in"; sourceTree = SOURCE_ROOT; };
 		232B88701A78C448009534D6 /* SherpaMECalculator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMECalculator.cpp; path = ../Source/SherpaME/SherpaMECalculator.cpp; sourceTree = SOURCE_ROOT; };
 		232B88711A78C448009534D6 /* SherpaMECalculator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMECalculator.h; path = ../Source/SherpaME/SherpaMECalculator.h; sourceTree = SOURCE_ROOT; };
+		235B15D61B88A4000009D192 /* SherpaDataReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SherpaDataReader.h; sourceTree = "<group>"; };
 		23695DD81A8CDC3F0083BFAA /* SherpaMEProgram.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaMEProgram.cpp; path = ../Source/SherpaME/SherpaMEProgram.cpp; sourceTree = SOURCE_ROOT; };
 		23695DD91A8CDC3F0083BFAA /* SherpaMEProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMEProgram.h; path = ../Source/SherpaME/SherpaMEProgram.h; sourceTree = SOURCE_ROOT; };
 		23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MERootEvent.cpp; sourceTree = "<group>"; };
@@ -230,6 +231,7 @@
 				23B379BE1B0F7AF600C49A17 /* SherpaRootEventFile.cpp */,
 				23B379C31B0F7B1B00C49A17 /* HepMCEventFile.h */,
 				23B379C21B0F7B1B00C49A17 /* HepMCEventFile.cpp */,
+				235B15D61B88A4000009D192 /* SherpaDataReader.h */,
 			);
 			name = Common;
 			path = ../Source/Common;
@@ -435,6 +437,7 @@
 					"-lMathCore",
 					"-lThread",
 					"-lSherpaMain",
+					"-lToolsMath",
 					"-lToolsOrg",
 					"-lToolsPhys",
 					"-lPhasicMain",
@@ -455,6 +458,7 @@
 					"-Wno-format-nonliteral",
 					"-Wno-old-style-cast",
 					"-Wno-deprecated",
+					"-Wno-weak-vtables",
 				);
 			};
 			name = Debug;
@@ -549,6 +553,7 @@
 					"-lMathCore",
 					"-lThread",
 					"-lSherpaMain",
+					"-lToolsMath",
 					"-lToolsOrg",
 					"-lToolsPhys",
 					"-lPhasicMain",
@@ -569,6 +574,7 @@
 					"-Wno-format-nonliteral",
 					"-Wno-old-style-cast",
 					"-Wno-deprecated",
+					"-Wno-weak-vtables",
 				);
 			};
 			name = Release;

@@ -6,6 +6,7 @@
 #include "MERootEvent.h"
 
 #include "common.h"
+#include "SherpaDataReader.h"
 
 #include <limits>
 
@@ -17,7 +18,6 @@
 #include <SHERPA/Initialization/Initialization_Handler.H>
 #include <MODEL/Main/Model_Base.h>
 #include <ATOOLS/Org/Run_Parameter.H>
-#include <ATOOLS/Org/Data_Reader.H>
 
 // Root includes
 #include <TFile.h>
@@ -39,6 +39,15 @@ SherpaWeight::~SherpaWeight() throw()
 {
     if (m_bOwnModel)
         delete m_pModel;
+
+    try
+    {
+        m_upSherpa.reset();
+    }
+    catch (...)
+    {
+        LogMsgError( "Unexpected exception while terminating Sherpa framework." );
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,13 +102,9 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
         std::string runFileSection  = pInitHandler->File();
         std::string runFileBase     = runFileSection.substr( 0, runFileSection.find("|") );  // strip off section declaration following '|'
 
-        ATOOLS::Data_Reader reader(" ",";","!","=");
-        reader.AddComment("#");
-        reader.AddWordSeparator("\t");
-        reader.SetInputPath( SherpaRunPath() );
-        reader.SetInputFile( runFileSection );
-        
-        // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
+        DefaultDataReader reader( SherpaRunPath(), runFileSection );
+
+        // Note: By default, DefaultDataReader (Data_Reader) appends the (run) section and command line parameters to the section of the file it is reading.
 
         m_sherpaWeightFileSection = reader.GetValue<std::string>( "SHERPA_WEIGHT_FILE", runFileBase + "|(SherpaWeight){|}(SherpaWeight)" );
         LogMsgInfo( "Configuration:\t" + m_sherpaWeightFileSection );
@@ -139,11 +144,7 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
         if (modelFile.empty())
             ThrowError( "No model file/section defined. Set MODEL_DATA_FILE." );
 
-        ATOOLS::Data_Reader reader(" ",";","!","=");
-        reader.AddComment("#");
-        reader.AddWordSeparator("\t");
-        reader.SetInputPath( SherpaRunPath() );
-        reader.SetInputFile( modelFile );
+        DefaultDataReader reader( SherpaRunPath(), modelFile );
 
         m_pModel->Initialize( *this, reader );
     }
@@ -158,14 +159,10 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
 void SherpaWeight::ReadParametersFromFile( const char * /*filePath*/ /*= nullptr*/ )
 {
     ParameterVector params;
-    
-    ATOOLS::Data_Reader reader(" ",";","!","=");
-    reader.AddComment("#");
-    reader.AddWordSeparator("\t");
-    reader.SetInputPath( SherpaRunPath() );
-    reader.SetInputFile( m_sherpaWeightFileSection );
-    
-    // Note: By default, Data_Reader appends the (run) section and command line parameters to the section of the file it is reading.
+
+    DefaultDataReader reader( SherpaRunPath(), m_sherpaWeightFileSection );
+
+    // Note: By default, DefaultDataReader (Data_Reader) appends the (run) section and command line parameters to the section of the file it is reading.
     reader.SetAddCommandLine(false);  // read the raw file input
     
     std::vector< std::vector<std::string> > stringMatrix;
