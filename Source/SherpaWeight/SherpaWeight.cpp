@@ -133,6 +133,8 @@ void SherpaWeight::Initialize( const std::string & eventFileName, const std::vec
             m_pModel = new SM_AGC_Model;
         else if (modelName == "FeynRules")
             m_pModel = new FeynRulesModel;
+        else  // TODO: add check for UFO section
+            m_pModel = new UFOModel(modelName);
 
         if (!m_pModel)
             ThrowError( "Model " + modelName + " is not supported." );
@@ -843,5 +845,242 @@ void SherpaWeight::FeynRulesModel::CreateFeynRulesParamCard( const std::string &
         }
         
         ThrowError( "FeynRules param card (" + srcFilePath + ") missing reweight parameters: " + strList );
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// class SherpaWeight::UFOModel
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+SherpaWeight::UFOModel::UFOModel( const std::string & modelName )
+    : m_modelName(modelName)
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+SherpaWeight::UFOModel::~UFOModel() throw()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::UFOModel::Initialize( SherpaWeight & parent, ATOOLS::Data_Reader & modelFileSectionReader )
+{
+    m_pParent = &parent;
+
+    LogMsgInfo( "\n------------------------------------------------------------" );
+    LogMsgInfo(   "  UFO Model Interface" );
+
+    std::string paramCard = modelFileSectionReader.GetValue<std::string>( "UFO_PARAM_CARD", "" );
+    if (paramCard.find("|") != std::string::npos)
+        ThrowError( "UFO_PARAM_CARD must define only a file and not a section within a file." );
+
+    if (paramCard.empty())
+    {
+        m_bUseRunCard = true;
+
+        paramCard = ATOOLS::rpa->gen.Variable("RUN_DATA_FILE");
+
+        if (paramCard.find("|") != std::string::npos)
+            paramCard = paramCard.substr(0,paramCard.find("|"));
+
+        if (paramCard.empty())
+            ThrowError( "No run file defined. Set RUN_DATA_FILE." );
+    }
+
+    m_sourceParamCardFile = paramCard;
+
+    LogMsgInfo( "  UFO_PARAM_CARD = " + m_sourceParamCardFile + (m_bUseRunCard ? "|(ufo){|}(ufo)" : "") );
+    LogMsgInfo( "------------------------------------------------------------\n" );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::UFOModel::ValidateParameters( const ParameterVector & params )
+{
+    // all parameter names must be of the form: block[index]
+
+    LogMsgInfo( "Validating reweight parameters. Format: block[id]" );
+
+    std::set<std::string> invalidParam;
+
+    for (const ReweightParameter & p : params)
+    {
+        char block[121] = {};       // 1 extra for null character
+        int  id         = 0;
+        int  readCount  = 0;
+
+        if (sscanf( p.name.c_str(), "%120[^[][%i]%n", static_cast<char *>(block), static_cast<int *>(&id), static_cast<int *>(&readCount) ) == 2)
+        {
+            if (readCount == (int)p.name.size())
+                continue;   // this name is valid
+        }
+
+        invalidParam.insert( p.name );
+    }
+
+    if (!invalidParam.empty())
+    {
+        std::string strInvalid;
+        for (const std::string & s : invalidParam)
+        {
+            if (!strInvalid.empty()) strInvalid += ", ";
+            strInvalid += s;
+        }
+
+        ThrowError( "Invalid reweight parameters for UFO model: " + strInvalid );
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+std::string SherpaWeight::UFOModel::CommandLineArgs( const ParameterVector & params, const DoubleVector & paramValues )
+{
+    std::string srcFilePath = m_pParent->SherpaRunPath() + m_sourceParamCardFile;
+    std::string dstFilePath = m_pParent->TemporaryPath() + "param_card_me.dat";
+
+    // create param_card with new parameter values
+    CreateUFOParamCard( srcFilePath, dstFilePath, m_bUseRunCard, params, paramValues );
+
+    std::string cmdArgs = "\"UFO_PARAM_CARD=" + dstFilePath + "\"";
+    return cmdArgs;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+void SherpaWeight::UFOModel::CreateUFOParamCard( const std::string & srcFilePath, const std::string & dstFilePath, bool bUseUfoSection,
+                                                            const ParameterVector & parameters, const DoubleVector & paramValues )    // static
+{
+    struct Local  // local object for automated cleanup
+    {
+        FILE * fpSrc = nullptr;
+        FILE * fpDst = nullptr;
+
+        ~Local()
+        {
+            if (fpSrc) { fclose(fpSrc); fpSrc = nullptr; }
+            if (fpDst) { fclose(fpDst); fpDst = nullptr; }
+        }
+    }
+    local;
+
+
+    if (parameters.size() != paramValues.size())
+        ThrowError( std::invalid_argument( "CreateUFOParamCard: mismatch in size of parameter and value vectors." ) );
+
+    // setup remainingNames to track outstanding parameter substitutions
+    std::set<std::string> remainingNames;
+
+    for (const ReweightParameter & p : parameters)
+        remainingNames.insert( p.name );
+
+    // open files
+
+    local.fpSrc = fopen( srcFilePath.c_str(), "rt" );
+    if (!local.fpSrc)
+        ThrowError( std::system_error( errno, std::generic_category(), "Failed to open UFO param card (" + srcFilePath + ")" ) );
+
+    local.fpDst = fopen( dstFilePath.c_str(), "wt" );
+    if (!local.fpDst)
+        ThrowError( std::system_error( errno, std::generic_category(), "Failed to create UFO param card (" + srcFilePath + ")" ) );
+
+    // copy all lines from source to destination, substituting parameter values
+
+    const size_t maxLine = 1024;
+    char srcBuffer[maxLine];
+    char dstBuffer[maxLine];
+
+    bool        bUfoSection = false;
+    std::string blockName;
+
+    while (fgets( srcBuffer, (int)maxLine, local.fpSrc ) != nullptr)
+    {
+        strncpy( dstBuffer, srcBuffer, maxLine );  // default dst is same as src
+
+        char * pSrc = srcBuffer;
+        char * pDst = dstBuffer;
+
+        while (*pSrc && isblank(*pSrc)) pSrc++;                 // skip white-space
+
+        if (bUseUfoSection)
+        {
+            if (!bUfoSection)
+            {
+                bUfoSection = (strncmp( pSrc, "(ufo){", 6 ) == 0);
+                continue;  // skip this line
+            }
+            else // bUfoSection = true
+            {
+                bUfoSection = (strncmp( pSrc, "}(ufo)", 6 ) != 0);
+                if (!bUfoSection)
+                    continue;  // skip this line
+            }
+        }
+
+        if (strncmp( pSrc, "block ", 6 ) == 0)
+        {
+            // get new block name
+
+            blockName.clear();
+
+            char name[121] = {};       // 1 extra for null character
+            if (sscanf( pSrc, "block %120s", static_cast<char *>(name) ) == 1)
+                blockName = name;
+
+            goto PUT_LINE;
+        }
+
+        if (!blockName.empty())
+        {
+            int    id    = 0;
+            double value = 0.0;
+
+            if (sscanf( pSrc, "%i %lf", static_cast<int *>(&id), static_cast<double *>(&value) ) != 2)
+            {
+                blockName.clear();
+                goto PUT_LINE;
+            }
+
+            for (size_t i = 0; i < parameters.size(); ++i)
+            {
+                // search for a matching block name and index
+
+                const char * paramName = parameters[i].name.c_str();
+
+                if (strncmp( paramName, blockName.c_str(), blockName.size() ) != 0)
+                    continue;
+
+                const char * paramSuffix = paramName + blockName.size();
+                int paramId = 0;
+                if (sscanf( paramSuffix, "[%i]", static_cast<int *>(&paramId) ) != 1)
+                    continue;
+
+                if (id != paramId)
+                    continue;
+
+                // replace value
+                value = paramValues[i];
+                sprintf( pDst, "\t%i %.13E\n", FMT_I(id), FMT_F(value) );
+
+                remainingNames.erase( parameters[i].name );
+
+                break;
+            }
+        }
+
+        PUT_LINE :
+        fputs( dstBuffer, local.fpDst );
+    }
+
+    if (!feof(local.fpSrc))
+        ThrowError( "Failed to read UFO param card (" + srcFilePath + ")" );
+
+    if (!remainingNames.empty())
+    {
+        std::string strList;
+        for (const std::string & s : remainingNames)
+        {
+            if (!strList.empty()) strList += ", ";
+            strList += s;
+        }
+
+        ThrowError( "UFO param card (" + srcFilePath + ") missing reweight parameters: " + strList );
     }
 }

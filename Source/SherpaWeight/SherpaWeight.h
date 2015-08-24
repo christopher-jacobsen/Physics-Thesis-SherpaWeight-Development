@@ -53,6 +53,7 @@ public:     ////// public types //////
 
     class SM_AGC_Model;
     class FeynRulesModel;
+    class UFOModel;
 
 public:     ////// public methods //////
 
@@ -177,6 +178,39 @@ private:
 private:
     FeynRulesModel(const FeynRulesModel &)              = delete;   // disable copy constructor
     FeynRulesModel & operator=(const FeynRulesModel &)  = delete;   // disable assignment operator
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// class SherpaWeight::UFOModel
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SherpaWeight::UFOModel : public SherpaWeight::ModelInterface
+{
+public:
+    UFOModel( const std::string & modelName );
+    virtual ~UFOModel() throw();
+
+public:  // ModelInterface overrides
+
+    virtual void Initialize( SherpaWeight & parent, ATOOLS::Data_Reader & modelFileSectionReader );
+
+    virtual void ValidateParameters( const ParameterVector & params );
+
+    virtual std::string CommandLineArgs( const ParameterVector & params, const DoubleVector & paramValues );
+
+protected:
+    static void CreateUFOParamCard( const std::string & srcFilePath,    const std::string & dstFilePath, bool bUseUfoSection,
+                                    const ParameterVector & parameters, const DoubleVector & paramValues );
+
+private:
+    std::string     m_modelName;
+    SherpaWeight *  m_pParent               = nullptr;
+    bool            m_bUseRunCard           = false;
+    std::string     m_sourceParamCardFile;
+
+private:
+    UFOModel(const UFOModel &)              = delete;   // disable copy constructor
+    UFOModel & operator=(const UFOModel &)  = delete;   // disable assignment operator
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
