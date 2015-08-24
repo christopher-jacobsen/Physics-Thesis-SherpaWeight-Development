@@ -24,14 +24,20 @@
 #include <TFile.h>
 #include <TTree.h>
 
+// OpenMPI includes
+#include <mpi.h>
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaMEProgram
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 SherpaMEProgram::SherpaMEProgram()
-    : m_upSherpa( new SHERPA::Sherpa )
 {
+    // initialize MPI (required if sherpa was compiled with --enable-mpi configure option)
+    MPI::Init();
+
+    m_upSherpa.reset( new SHERPA::Sherpa );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +51,9 @@ SherpaMEProgram::~SherpaMEProgram() throw()
     {
         LogMsgError( "Unexpected exception while terminating Sherpa framework." );
     }
+
+    // finalize MPI (required if sherpa was compiled with --enable-mpi configure option)
+    MPI::Finalize();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +194,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
         LogMsgError( "Sherpa Exception: %hs\n\t[Source %hs::%hs]",
                     FMT_HS(error.Info().c_str()), FMT_HS(error.Class().c_str()), FMT_HS(error.Method().c_str()) );
     }
-    
+
     return EXIT_FAILURE;
 }
 
