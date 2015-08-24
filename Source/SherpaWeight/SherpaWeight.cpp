@@ -194,7 +194,7 @@ void SherpaWeight::ReadParametersFromFile( const char * /*filePath*/ /*= nullptr
                     stream.precision(12);
                     
                     stream << row[1];
-                    stream >> param.scale;
+                    stream >> param.offset;
                     if (stream.fail() || !stream.eof())
                         ThrowError( "Could not convert string to floating point value." );  // caught below
                     
@@ -202,14 +202,14 @@ void SherpaWeight::ReadParametersFromFile( const char * /*filePath*/ /*= nullptr
                     {
                         stream.clear();
                         stream << row[2];
-                        stream >> param.offset;
+                        stream >> param.scale;
                         if (stream.fail() || !stream.eof())
                             ThrowError( "Could not convert string to floating point value." );  // caught below
                     }
                 }
                 catch (const std::exception &)
                 {
-                    ThrowError( "Failed to read scale/offset for reweight parameter " + param.name );
+                    ThrowError( "Failed to read expansion point/delta for reweight parameter " + param.name );
                 }
             }
             
