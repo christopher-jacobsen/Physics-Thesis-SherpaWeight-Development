@@ -16,13 +16,14 @@
 // Sherpa includes
 #include <SHERPA/Main/Sherpa.H>
 #include <SHERPA/Initialization/Initialization_Handler.H>
-#include <MODEL/Main/Model_Base.h>
+#include <MODEL/Main/Model_Base.H>
 #include <ATOOLS/Org/Run_Parameter.H>
 
 // Root includes
 #include <TFile.h>
 #include <TTree.h>
 #include <TMatrixD.h>
+#include <TDecompLU.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class SherpaWeight
@@ -558,18 +559,105 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
             coefMatrix[r].assign( coef[r], coef[r] + nCoefs );
         }
     }
-    
+
+    /*
+    // determine pre-scale for coef matrix
+    double prescale = 1.0;
+    {
+        double logSum = 0.0;
+        double logMin = 0.0;
+        double logMax = 0.0;
+        size_t count  = 0;
+        for (size_t r = 0; r < nCoefs; ++r)
+        {
+            for (size_t c = 0; c < nCoefs; ++c)
+            {
+                double value = std::abs(coef[r][c]);
+                if (value != 0.0)
+                {
+                    double logValue = std::log10( value );
+                    if (std::isfinite(logValue))
+                    {
+                        logSum += logValue;
+                        logMin = (count == 0) ? logValue : std::min(logMin, logValue);
+                        logMax = (count == 0) ? logValue : std::max(logMax, logValue);
+                        ++count;
+                    }
+                }
+            }
+        }
+
+        if (count)
+        {
+            //double logAverage = logSum / count;
+            //prescale = pow( 10.0, -logAverage );
+            //prescale = pow( 10.0, -(logMax+logMin)/2.0 );
+            //prescale = pow( 10.0, -logMin );
+        }
+    }
+
+    LogMsgInfo( "Rescaling before inversion by %E", FMT_F(prescale) );
+
+    {
+        for (size_t r = 0; r < nCoefs; ++r)
+        {
+            for (size_t c = 0; c < nCoefs; ++c)
+            {
+                coef[r][c] *= prescale;
+            }
+        }
+    }
+    */
+
     // invert coefficient matrix
     {
         TMatrixD matrix( (Int_t)nCoefs, (Int_t)nCoefs, static_cast<const Double_t *>( coef[0] ) );  // copy coef to TMatrixD
+        TMatrixD invMatrix( matrix );
 
         Double_t determinant = 0;
-        matrix.Invert( &determinant );
-        if (fabs(determinant) < std::numeric_limits<Double_t>::epsilon())
+        Double_t tolerance   = std::numeric_limits<Double_t>::min();  // allow very small numbers
+
+        //matrix.Invert( &determinant );
+        TDecompLU::InvertLU( invMatrix, tolerance, &determinant );
+
+        // check if determinant == 0.0
+        if (!std::isnormal(determinant)) // isnormal returns false if 0.0, NaN, Inf, or out of range
             ThrowError( std::logic_error( "Bilinear coefficient matrix is singular and cannot be inverted." ) );
 
-        matrix.GetMatrix2Array( static_cast<double *>( coef[0] ) );     // copy back to coef
+        // check if matrix * invMatrix is identity
+        {
+            TMatrixD unit( (Int_t)nCoefs, (Int_t)nCoefs );
+            unit.UnitMatrix();
+
+            TMatrixD error = matrix * invMatrix - unit;
+
+            Double_t   maxError    = 0.0;
+            Double_t * errorValues = error.GetMatrixArray();
+            for (size_t i = 0; i < nCoefs * nCoefs; ++i)
+            {
+                Double_t errVal = errorValues[i];
+                maxError = std::max( maxError, errVal );
+            }
+
+            LogMsgInfo( "Matrix inversion error: %E", FMT_F(maxError) );
+            if (maxError > std::numeric_limits<Double_t>::epsilon())
+                ThrowError( std::logic_error( "Insufficient precision to invert bilinear coefficient matrix." ) );
+        }
+
+        invMatrix.GetMatrix2Array( static_cast<double *>( coef[0] ) );     // copy back to coef
     }
+
+    /*
+    {
+        for (size_t r = 0; r < nCoefs; ++r)
+        {
+            for (size_t c = 0; c < nCoefs; ++c)
+            {
+                coef[r][c] *= prescale;
+            }
+        }
+    }
+    */
 
     /*
     // get rid of numerical precision residuals
