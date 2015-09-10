@@ -30,6 +30,7 @@ private:
 
 private:
     std::unique_ptr<HepMC::GenEvent>    m_upGenEvent;
+    DoubleVector                        m_coefs;
 
     friend HepMCEventFile;
 };
@@ -121,10 +122,10 @@ void HepMCEventFile::SetCoefficientNames( const StringVector & coefNames )
     if (coefNames.empty())
         ThrowError( "Called SetCoefficientNames() with empty string vector." );
 
-//    if (!m_coefs.empty())
-//        ThrowError( "SetCoefficientNames() must only be called once and before WriteEvent()." );
+    if (!m_coefNames.empty())
+        ThrowError( "SetCoefficientNames() must only be called once and before WriteEvent()." );
 
-//    m_coefs.resize( coefNames.size() );
+    m_coefNames = coefNames;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,6 +135,24 @@ void HepMCEventFile::WriteEvent( const EventFileEvent & vEvent )
 
     if (!event.m_upGenEvent)
         ThrowError( "WriteEvent() called on uninitialized event." );
+
+    if (!event.m_coefs.empty())
+    {
+        if (!m_coefNames.empty() && (m_coefNames.size() != event.m_coefs.size()))
+            ThrowError( "Number of coefficients does not match number of names." );
+
+        HepMC::WeightContainer & weights = event.m_upGenEvent->weights();
+
+        auto itrName = m_coefNames.cbegin();
+        auto endName = m_coefNames.cend();
+        for (double c : event.m_coefs)
+        {
+            if (itrName != endName)
+                weights[ *itrName++ ] = c;
+            else
+                weights.push_back(c);
+        }
+    }
 
     if (!m_upIO)
         ThrowError( "WriteEvent() called on closed file." );
@@ -205,10 +224,7 @@ void HepMCEventFileEvent::GetSignalVertex( EventFileVertex & vertex ) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 void HepMCEventFileEvent::SetCoefficients( const DoubleVector & coefs )
 {
-    HepMC::WeightContainer & weights = m_upGenEvent->weights();
-
-    for (double c : coefs)
-        weights.push_back(c);
+    m_coefs = coefs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

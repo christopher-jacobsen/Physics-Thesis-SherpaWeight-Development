@@ -44,6 +44,7 @@ public:
 private:
     std::string                             m_fileName;
     std::unique_ptr<HepMC::IO_GenEvent>     m_upIO;
+    StringVector                            m_coefNames;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
