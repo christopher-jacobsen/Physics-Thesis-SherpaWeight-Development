@@ -190,7 +190,7 @@ void SherpaWeightProgram::SaveCoefficients( const RunParameters & param )
                 for (double value : coefs)
                 {
                     const char * pName = (index < coefNames.size()) ? coefNames[index].c_str() : "Unknown";
-                    LogMsgInfo( "%-20hs:\t%.15E", FMT_HS(pName), FMT_F(value) );
+                    LogMsgInfo( "%-20hs:\t%.16E", FMT_HS(pName), FMT_F(value) );
                     ++index;
                 }
                 
