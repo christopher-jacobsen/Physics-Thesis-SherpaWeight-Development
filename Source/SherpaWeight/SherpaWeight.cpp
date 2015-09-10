@@ -639,8 +639,10 @@ void SherpaWeight::GetBilinearMatrices( const ParameterVector & parameters,
                 maxError = std::max( maxError, errVal );
             }
 
-            LogMsgInfo( "Matrix inversion error: %E", FMT_F(maxError) );
-            if (maxError > std::numeric_limits<Double_t>::epsilon())
+            Double_t epsilon = std::numeric_limits<Double_t>::epsilon();
+
+            LogMsgInfo( "Matrix inversion error: %E (epsilon=%E)", FMT_F(maxError), FMT_F(epsilon) );
+            if (maxError > 10 * epsilon)
                 ThrowError( std::logic_error( "Insufficient precision to invert bilinear coefficient matrix." ) );
         }
 
