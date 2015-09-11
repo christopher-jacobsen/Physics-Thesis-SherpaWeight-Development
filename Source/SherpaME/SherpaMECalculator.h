@@ -45,7 +45,7 @@ private:
 
     size_t                          m_ncolinds;
     std::vector<std::vector<int> >  m_colcombinations;
-    std::vector<int>                m_gluinds, m_quainds, m_quabarinds;
+    std::vector<size_t>             m_gluinds, m_quainds, m_quabarinds;
     std::vector<int>                m_inpdgs, m_outpdgs;
     std::vector<size_t>             m_mom_inds;
 

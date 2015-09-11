@@ -58,7 +58,7 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
         for (size_t j(0); j < m_nin; j++)
         {
             if (p_amp->Leg(j)->Flav().Bar() ==
-                ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?false:true))
+                ATOOLS::Flavour((kf_code)abs(pdgs[i]), pdgs[i]<0?false:true))
             {
                 // if the index j is already assigned, continue searching
                 if(std::find(m_mom_inds.begin(), m_mom_inds.end(), j)!=m_mom_inds.end())
@@ -81,7 +81,7 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
             // msg_Debugging()<<ATOOLS::Flavour(abs(pdgs[i]),pdgs[i]<0?true:false)
             //                <<" <-> "<<p_amp->Leg(j)->Flav().Bar()<<std::endl;
             if (p_amp->Leg(j)->Flav() ==
-               ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?true:false))
+               ATOOLS::Flavour((kf_code)abs(pdgs[i]), pdgs[i]<0?true:false))
             {
                 // if the index j is already assigned, continue searching
                 if(std::find(m_mom_inds.begin(), m_mom_inds.end(), j)!=m_mom_inds.end())
@@ -124,7 +124,7 @@ void SherpaMECalculator::SetMomenta(size_t n)
     {
         std::vector<std::string> &cur(momdata[nf]);
         if (cur.size()==2 && cur[0]=="Point" &&
-            ATOOLS::ToType<int>(cur[1])==n) { begin=nf+1; break; }
+            ATOOLS::ToType<int>(cur[1])==(int)n) { begin=nf+1; break; }
     }
     
     for (size_t nf(begin);nf<momdata.size();++nf)
@@ -154,7 +154,7 @@ void SherpaMECalculator::SetMomenta(size_t n)
         
         if (p_amp->Leg(id)->Flav().IsAnti()) kfamp=-kfamp;
         
-        if (kf!=kfamp) THROW(fatal_error,"Wrong momentum ordering.");
+        if ((kf_code)kf!=kfamp) THROW(fatal_error,"Wrong momentum ordering.");
         
         if (id<m_nin) p_amp->Leg(id)->SetMom(-p);
         else          p_amp->Leg(id)->SetMom(p);
@@ -173,7 +173,7 @@ void SherpaMECalculator::SetMomenta(const std::vector<double*> &p)
                                                         -p[i][2], -p[i][3]));
     for (size_t i(m_nin); i<p.size(); i++)
         p_amp->Leg(m_mom_inds[i])->SetMom(ATOOLS::Vec4D( p[i][0],  p[i][1],
-                                                        p[i][2],  p[i][3]));
+                                                         p[i][2],  p[i][3]));
 }
 
 void SherpaMECalculator::SetMomenta(const ATOOLS::Vec4D_Vector &p)
@@ -202,7 +202,7 @@ void SherpaMECalculator::AddInFlav(const int &id)
 {
     // DEBUG_FUNC(id);
     p_amp->CreateLeg(ATOOLS::Vec4D(),
-                     ATOOLS::Flavour(id>0?id:-id, id>0 ? true : false));
+                     ATOOLS::Flavour((kf_code)(id>0?id:-id), id>0 ? true : false));
     p_amp->SetNIn(p_amp->NIn()+1);
     m_inpdgs.push_back(id);
     m_nin+=1;
@@ -212,7 +212,7 @@ void SherpaMECalculator::AddOutFlav(const int &id)
 {
     // DEBUG_FUNC(id);
     p_amp->CreateLeg(ATOOLS::Vec4D(),
-                     ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true));
+                     ATOOLS::Flavour((kf_code)(id>0?id:-id), id>0 ? false : true));
     m_outpdgs.push_back(id);
     m_nout+=1;
 }
@@ -221,7 +221,7 @@ void SherpaMECalculator::AddInFlav(const int &id, const int &col1, const int &co
 {
     // DEBUG_FUNC(id<<" ("<<col1<<","<<col2<<")");
     p_amp->CreateLeg(ATOOLS::Vec4D(),
-                     ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true),  // POTENTIAL BUG: shouldn't this be id>0?true:false as in the other AddInFlav above.
+                     ATOOLS::Flavour((kf_code)(id>0?id:-id), id>0 ? false : true),  // POTENTIAL BUG: shouldn't this be id>0?true:false as in the other AddInFlav above.
                      ATOOLS::ColorID(col1, col2));
     p_amp->SetNIn(p_amp->NIn()+1);
     m_inpdgs.push_back(id);
@@ -232,7 +232,7 @@ void SherpaMECalculator::AddOutFlav(const int &id, const int &col1, const int &c
 {
     // DEBUG_FUNC(id<<" ("<<col1<<","<<col2<<")");
     p_amp->CreateLeg(ATOOLS::Vec4D(),
-                     ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true),
+                     ATOOLS::Flavour((kf_code)(id>0?id:-id), id>0 ? false : true),
                      ATOOLS::ColorID(col1, col2));
     m_outpdgs.push_back(id);
     m_nout+=1;
@@ -397,9 +397,10 @@ void SherpaMECalculator::Initialize()
     
     m_name=p_proc->Name();
     
-    for (unsigned int i = 0; i<p_amp->Legs().size(); i++)
+    for (size_t i = 0; i<p_amp->Legs().size(); i++)
     {
-        if (p_amp->Leg(i)->Flav().Strong()) {
+        if (p_amp->Leg(i)->Flav().Strong())
+        {
             int scharge = p_amp->Leg(i)->Flav().StrongCharge();
             if (scharge == 8)
                 m_gluinds.push_back(i);
@@ -423,7 +424,7 @@ void SherpaMECalculator::Initialize()
         int r(0), g(0), b(0);
         int rb(0), gb(0), bb(0);
         std::vector<int> combination;
-        for (int m(0); m<m_ncolinds/2; m++)
+        for (size_t m(0); m<m_ncolinds/2; m++)
         {
             mod  = k%3;
             switch(mod) {
@@ -474,25 +475,32 @@ double SherpaMECalculator::MatrixElement()
 
 double SherpaMECalculator::CSMatrixElement()
 {
-    if (!HasColorIntegrator()) return p_proc->Differential(*p_amp,1|4);
+    if (!HasColorIntegrator())
+        return p_proc->Differential(*p_amp,1|4);
+
     SP(PHASIC::Color_Integrator) ci(p_proc->Integrator()->ColorIntegrator());
     ci->SetWOn(false);
     double r_csme(0.);
+
     std::vector<std::vector<int> >::const_iterator it;
-    std::vector<int>::const_iterator jt;
-    for(it=m_colcombinations.begin(); it!=m_colcombinations.end(); ++it) {
-        int ind(0);
+    std::vector<size_t>::const_iterator jt;
+    for (it=m_colcombinations.begin(); it!=m_colcombinations.end(); ++it)
+    {
+        size_t ind(0);
         size_t indbar(m_ncolinds/2);
-        for(jt=m_gluinds.begin(); jt!=m_gluinds.end(); ++jt) {
+        for(jt=m_gluinds.begin(); jt!=m_gluinds.end(); ++jt)
+        {
             p_amp->Leg(*jt)->SetCol(ATOOLS::ColorID((*it)[ind], (*it)[indbar]));
             ind+=1;
             indbar+=1;
         }
-        for(jt=m_quainds.begin(); jt!=m_quainds.end(); ++jt) {
+        for(jt=m_quainds.begin(); jt!=m_quainds.end(); ++jt)
+        {
             p_amp->Leg(*jt)->SetCol(ATOOLS::ColorID((*it)[ind], 0));
             ind+=1;
         }
-        for(jt=m_quabarinds.begin(); jt!=m_quabarinds.end(); ++jt) {
+        for(jt=m_quabarinds.begin(); jt!=m_quabarinds.end(); ++jt)
+        {
             p_amp->Leg(*jt)->SetCol(ATOOLS::ColorID(0,(*it)[indbar] ));
             indbar+=1;
         }
@@ -501,6 +509,7 @@ double SherpaMECalculator::CSMatrixElement()
         SetColors();
         r_csme+=p_proc->Differential(*p_amp,1|4);
     }
+    
     ci->SetWOn(true);
     return r_csme;
 }
