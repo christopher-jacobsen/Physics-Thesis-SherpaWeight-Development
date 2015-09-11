@@ -39,8 +39,6 @@ SherpaMECalculator::~SherpaMECalculator() throw()
 {
 }
 
-// TO BE REMOVED IN FINAL VERSION OR TO BE REPLACED BY PROPER METHOD TO
-// DETERMINE WHICH ME GENERATOR IS USED
 bool SherpaMECalculator::HasColorIntegrator()
 {
     return (p_proc->Integrator()->ColorIntegrator() != 0);
@@ -48,17 +46,19 @@ bool SherpaMECalculator::HasColorIntegrator()
 
 void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
 {
+    // DEBUG_FUNC(m_nin<<"->"<<m_nout<<": "<<pdgs);
     if(pdgs.size()<m_nin+m_nout)
         THROW(fatal_error, "Wrong number of pdg codes given.");
     
-    for (unsigned int i(0); i<m_nin; i++)
+    for (size_t i(0); i<m_nin; i++)
     {
         // find the first occurence of a flavour of type pdgs[i] among the
         // external legs
         bool found = false;
-        for (unsigned int j(0); j < m_nin; j++)
+        for (size_t j(0); j < m_nin; j++)
         {
-            if (((long int)(p_amp->Leg(j)->Flav())) == ((long int)(ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?false:true))))
+            if (p_amp->Leg(j)->Flav().Bar() ==
+                ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?false:true))
             {
                 // if the index j is already assigned, continue searching
                 if(std::find(m_mom_inds.begin(), m_mom_inds.end(), j)!=m_mom_inds.end())
@@ -68,7 +68,7 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
                 break;
             }
         }
-        if(!found) THROW(fatal_error, "Could not assign pdg code.");
+        if(!found) THROW(fatal_error, "Could not assign IS pdg code.");
     }
     
     for (size_t i(m_nin); i<m_nin+m_nout; i++)
@@ -78,8 +78,10 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
         bool found = false;
         for (size_t j(m_nin); j < m_nin+m_nout; j++)
         {
-            if(((long int)(p_amp->Leg(j)->Flav()))
-               ==((long int)(ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?true:false))))
+            // msg_Debugging()<<ATOOLS::Flavour(abs(pdgs[i]),pdgs[i]<0?true:false)
+            //                <<" <-> "<<p_amp->Leg(j)->Flav().Bar()<<std::endl;
+            if (p_amp->Leg(j)->Flav() ==
+               ATOOLS::Flavour(abs(pdgs[i]), pdgs[i]<0?true:false))
             {
                 // if the index j is already assigned, continue searching
                 if(std::find(m_mom_inds.begin(), m_mom_inds.end(), j)!=m_mom_inds.end())
@@ -89,8 +91,9 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
                 break;
             }
         }
-        if(!found) THROW(fatal_error, "Could not assign pdg code.");
+        if(!found) THROW(fatal_error, "Could not assign FS pdg code.");
     }
+    // msg_Debugging()<<m_mom_inds<<std::endl;
 }
 
 size_t SherpaMECalculator::NumberOfPoints()
@@ -197,6 +200,7 @@ void SherpaMECalculator::SetMomentum(const size_t &index, const ATOOLS::Vec4D &p
 
 void SherpaMECalculator::AddInFlav(const int &id)
 {
+    // DEBUG_FUNC(id);
     p_amp->CreateLeg(ATOOLS::Vec4D(),
                      ATOOLS::Flavour(id>0?id:-id, id>0 ? true : false));
     p_amp->SetNIn(p_amp->NIn()+1);
@@ -206,6 +210,7 @@ void SherpaMECalculator::AddInFlav(const int &id)
 
 void SherpaMECalculator::AddOutFlav(const int &id)
 {
+    // DEBUG_FUNC(id);
     p_amp->CreateLeg(ATOOLS::Vec4D(),
                      ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true));
     m_outpdgs.push_back(id);
@@ -214,6 +219,7 @@ void SherpaMECalculator::AddOutFlav(const int &id)
 
 void SherpaMECalculator::AddInFlav(const int &id, const int &col1, const int &col2)
 {
+    // DEBUG_FUNC(id<<" ("<<col1<<","<<col2<<")");
     p_amp->CreateLeg(ATOOLS::Vec4D(),
                      ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true),  // POTENTIAL BUG: shouldn't this be id>0?true:false as in the other AddInFlav above.
                      ATOOLS::ColorID(col1, col2));
@@ -224,6 +230,7 @@ void SherpaMECalculator::AddInFlav(const int &id, const int &col1, const int &co
 
 void SherpaMECalculator::AddOutFlav(const int &id, const int &col1, const int &col2)
 {
+    // DEBUG_FUNC(id<<" ("<<col1<<","<<col2<<")");
     p_amp->CreateLeg(ATOOLS::Vec4D(),
                      ATOOLS::Flavour(id>0?id:-id, id>0 ? false : true),
                      ATOOLS::ColorID(col1, col2));
@@ -289,22 +296,24 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
     
     for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
     {
-        const PHASIC::StringProcess_Map * const stringMap = me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second;
-        
-        /*
-        // FOR DEBUGGING PURPOSES
-        std::cout << "Initialized Processes: " << std::endl;
-        for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
+        PHASIC::NLOTypeStringProcessMap_Map::const_iterator sit(me_handler->ProcMaps()[i]->begin());
+        for ( ; sit != me_handler->ProcMaps()[i]->end(); ++sit)
         {
-            std::cout << "Process " << (it->first) << std::endl;
+            const PHASIC::StringProcess_Map * const stringMap = sit->second;
+
+            /*
+            // FOR DEBUGGING PURPOSES
+            std::cout << "Initialized Processes: " << std::endl;
+            for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
+            {
+                std::cout << "Process " << (it->first) << std::endl;
+            }
+            */
+
+            PHASIC::StringProcess_Map::const_iterator pit(stringMap->find(matchName));
+            if (pit != stringMap->end())
+                return pit->second;
         }
-        */
-
-        PHASIC::StringProcess_Map::const_iterator pit(stringMap->find(matchName));
-        if (pit == stringMap->end())
-            continue;
-
-        return pit->second;
     }
 #endif
 
@@ -314,24 +323,28 @@ PHASIC::Process_Base* SherpaMECalculator::FindProcess()
 
     for (size_t i = 0; i < me_handler->ProcMaps().size(); ++i)
     {
-        const PHASIC::StringProcess_Map * const stringMap = me_handler->ProcMaps()[i]->find(PHASIC::nlo_type::lo)->second;
-
-        for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
+        PHASIC::NLOTypeStringProcessMap_Map::const_iterator sit(me_handler->ProcMaps()[i]->begin());
+        for ( ; sit != me_handler->ProcMaps()[i]->end(); ++sit)
         {
-            //std::cout << "Process " << (it->first) << std::endl;
+            const PHASIC::StringProcess_Map * const stringMap = sit->second;
 
-            PHASIC::Process_Base * proc = it->second;
-            
-            //std::cout << "  - flavours: " << proc->Flavours() << std::endl;
-            
-            if ((proc->NIn() != p_amp->NIn()) || (proc->NOut() != m_nout))
-                continue;
-            
-            if (proc->Flavours() != matchFlavours)
-                continue;
+            for (PHASIC::StringProcess_Map::const_iterator it = stringMap->begin(); it !=stringMap->end(); ++it)
+            {
+                //std::cout << "Process " << (it->first) << std::endl;
 
-            //std::cout << "Matched process " << proc->Name() << std::endl;
-            return proc;
+                PHASIC::Process_Base * proc = it->second;
+                
+                //std::cout << "  - flavours: " << proc->Flavours() << std::endl;
+                
+                if ((proc->NIn() != p_amp->NIn()) || (proc->NOut() != m_nout))
+                    continue;
+                
+                if (proc->Flavours() != matchFlavours)
+                    continue;
+
+                //std::cout << "Matched process " << proc->Name() << std::endl;
+                return proc;
+            }
         }
     }
     
@@ -348,6 +361,7 @@ void SherpaMECalculator::Initialize()
     /*
     // if no process was found, assume there is only
     // one initialized in the run card and take that one
+    // DEBUG_FUNC((p_proc?p_proc->Name():"no process set yet"));
     if(!p_proc)
     {
         SHERPA::Matrix_Element_Handler* me_handler = p_gen->GetInitHandler()->GetMatrixElementHandler();
@@ -356,9 +370,11 @@ void SherpaMECalculator::Initialize()
         if (procs.size()>1) THROW(fatal_error,"More than one process initialised.");
         
         p_proc=procs[0];
-        
+        // msg_Debugging()<<"Process: "<<p_proc->Name()<<std::endl;
         // fill cluster amplitude according to process
-        for (size_t i(0);i<p_proc->NIn()+p_proc->NOut();++i)
+        m_nin=p_proc->NIn();
+        m_nout=p_proc->NOut();
+        for (size_t i(0);i<p_proc->Flavours().size();++i)
         {
             ATOOLS::Flavour fl=p_proc->Flavours()[i];
             
@@ -368,14 +384,14 @@ void SherpaMECalculator::Initialize()
             // or m_inpdgs should contain the negated input pdgs.
             // The current code only if the inputs are pairs of opposite signed pdgs e.g. 11 -11.
             
-            if (i<p_proc->NIn()) fl=fl.Bar();
+            if (i<m_nin) fl=fl.Bar();
             
             p_amp->CreateLeg(ATOOLS::Vec4D(),fl);
             
             m_inpdgs.push_back(int(fl.IsAnti()?-fl.Kfcode():fl.Kfcode()));
         }
         
-        p_amp->SetNIn(m_nin=p_proc->NIn());
+        p_amp->SetNIn(m_nin);
     }
     */
     
@@ -439,14 +455,10 @@ void SherpaMECalculator::Initialize()
          it!=m_outpdgs.end(); it++) allpdgs.push_back(*it);
 
     SetMomentumIndices(allpdgs);
-}
 
-/*
-MODEL::ScalarConstantsMap * SherpaMECalculator::GetModelScalarConstants()
-{
-    return p_gen->GetInitHandler()->GetModel()->GetScalarConstants();
+    if (p_proc->Integrator()->ColorIntegrator()!=NULL)
+        p_proc->Integrator()->ColorIntegrator()->GeneratePoint();
 }
-*/
 
 double SherpaMECalculator::MatrixElement()
 {
@@ -462,7 +474,7 @@ double SherpaMECalculator::MatrixElement()
 
 double SherpaMECalculator::CSMatrixElement()
 {
-    if (!HasColorIntegrator()) return p_proc->Differential(*p_amp);
+    if (!HasColorIntegrator()) return p_proc->Differential(*p_amp,1|4);
     SP(PHASIC::Color_Integrator) ci(p_proc->Integrator()->ColorIntegrator());
     ci->SetWOn(false);
     double r_csme(0.);
@@ -487,7 +499,7 @@ double SherpaMECalculator::CSMatrixElement()
         if(ind!=m_ncolinds/2)  THROW(fatal_error, "Internal Error");
         if(indbar!=m_ncolinds) THROW(fatal_error, "Internal Error");
         SetColors();
-        r_csme+=p_proc->Differential(*p_amp);
+        r_csme+=p_proc->Differential(*p_amp,1|4);
     }
     ci->SetWOn(true);
     return r_csme;
