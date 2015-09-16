@@ -28,10 +28,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SherpaMECalculator::SherpaMECalculator(SHERPA::Sherpa *a_Generator) :
-m_name(""), p_amp(ATOOLS::Cluster_Amplitude::New()),
-p_gen(a_Generator), p_proc(NULL), m_ncolinds(0),
-m_npsp(0), m_nin(0), m_nout(0)
+SherpaMECalculator::SherpaMECalculator(SHERPA::Sherpa *a_Generator)
+  : m_name(""), p_amp(ATOOLS::Cluster_Amplitude::New()),
+    p_gen(a_Generator), p_proc(NULL), m_ncolinds(0),
+    //m_npsp(0),
+    m_nin(0), m_nout(0)
 {
 }
 
@@ -58,7 +59,7 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
         for (size_t j(0); j < m_nin; j++)
         {
             if (p_amp->Leg(j)->Flav().Bar() ==
-                ATOOLS::Flavour((kf_code)abs(pdgs[i]), pdgs[i]<0?false:true))
+                ATOOLS::Flavour((kf_code)abs(pdgs[i]), pdgs[i]>0?false:true))
             {
                 // if the index j is already assigned, continue searching
                 if(std::find(m_mom_inds.begin(), m_mom_inds.end(), j)!=m_mom_inds.end())
@@ -96,6 +97,7 @@ void SherpaMECalculator::SetMomentumIndices(const std::vector<int> &pdgs)
     // msg_Debugging()<<m_mom_inds<<std::endl;
 }
 
+#ifdef UNUSED
 size_t SherpaMECalculator::NumberOfPoints()
 {
     if (m_npsp>0) return m_npsp;
@@ -106,7 +108,9 @@ size_t SherpaMECalculator::NumberOfPoints()
     m_npsp=reader.GetValue<size_t>("NUMBER_OF_POINTS",1);
     return m_npsp;
 }
+#endif
 
+#ifdef UNUSED
 void SherpaMECalculator::SetMomenta(size_t n)
 {
     ATOOLS::Data_Reader reader(" ",";","!","=");
@@ -175,6 +179,7 @@ void SherpaMECalculator::SetMomenta(const std::vector<double*> &p)
         p_amp->Leg(m_mom_inds[i])->SetMom(ATOOLS::Vec4D( p[i][0],  p[i][1],
                                                          p[i][2],  p[i][3]));
 }
+#endif
 
 void SherpaMECalculator::SetMomenta(const ATOOLS::Vec4D_Vector &p)
 {
@@ -182,6 +187,7 @@ void SherpaMECalculator::SetMomenta(const ATOOLS::Vec4D_Vector &p)
     for (size_t i(m_nin);i<p.size();i++) p_amp->Leg(m_mom_inds[i])->SetMom( p[i]);
 }
 
+#ifdef UNUSED
 void SherpaMECalculator::SetMomentum(const size_t &index, const double &e,
                             const double &px, const double &py,
                             const double &pz)
@@ -197,6 +203,7 @@ void SherpaMECalculator::SetMomentum(const size_t &index, const ATOOLS::Vec4D &p
     if (index<m_nin) p_amp->Leg(m_mom_inds[index])->SetMom(-p);
     else             p_amp->Leg(m_mom_inds[index])->SetMom(p);
 }
+#endif
 
 void SherpaMECalculator::AddInFlav(const int &id)
 {
@@ -217,6 +224,7 @@ void SherpaMECalculator::AddOutFlav(const int &id)
     m_nout+=1;
 }
 
+#ifdef UNUSED
 void SherpaMECalculator::AddInFlav(const int &id, const int &col1, const int &col2)
 {
     // DEBUG_FUNC(id<<" ("<<col1<<","<<col2<<")");
@@ -237,6 +245,7 @@ void SherpaMECalculator::AddOutFlav(const int &id, const int &col1, const int &c
     m_outpdgs.push_back(id);
     m_nout+=1;
 }
+#endif
 
 double SherpaMECalculator::GenerateColorPoint()
 {
@@ -476,7 +485,7 @@ double SherpaMECalculator::MatrixElement()
 double SherpaMECalculator::CSMatrixElement()
 {
     if (!HasColorIntegrator())
-        return p_proc->Differential(*p_amp,1|4);
+        return p_proc->Differential(*p_amp);
 
     SP(PHASIC::Color_Integrator) ci(p_proc->Integrator()->ColorIntegrator());
     ci->SetWOn(false);
@@ -507,13 +516,14 @@ double SherpaMECalculator::CSMatrixElement()
         if(ind!=m_ncolinds/2)  THROW(fatal_error, "Internal Error");
         if(indbar!=m_ncolinds) THROW(fatal_error, "Internal Error");
         SetColors();
-        r_csme+=p_proc->Differential(*p_amp,1|4);
+        r_csme+=p_proc->Differential(*p_amp);
     }
     
     ci->SetWOn(true);
     return r_csme;
 }
 
+#ifdef UNUSED
 double SherpaMECalculator::GetFlux()
 {
     ATOOLS::Vec4D p0(-p_amp->Leg(0)->Mom());
@@ -536,3 +546,4 @@ ATOOLS::Flavour SherpaMECalculator::GetFlav(size_t i)
     ATOOLS::Flavour fl=p_amp->Leg(i)->Flav();
     return (i<m_nin?fl.Bar():fl);
 }
+#endif
