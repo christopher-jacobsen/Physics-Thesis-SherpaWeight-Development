@@ -10,6 +10,8 @@
 #include <HepMC/IO_GenEvent.h>
 #include <HepMC/GenEvent.h>
 
+#include "Gzip_Stream.H"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // class HepMCEventFileEvent
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,8 +67,16 @@ void HepMCEventFile::Open( const std::string & fileName, OpenMode mode )
 
     try
     {
-        std::ios::openmode ioMode = (mode == OpenMode::Write) ? std::ios::out : std::ios::in;
-        m_upIO.reset( new HepMC::IO_GenEvent( fileName, ioMode ) );
+        if (mode == OpenMode::Read)
+        {
+            m_upIStream.reset( new ATOOLS::igzstream( fileName.c_str(), std::ios::in ) );
+            m_upIO.reset(      new HepMC::IO_GenEvent( *m_upIStream.get() ) );
+        }
+        else
+        {
+            m_upOStream.reset( new ATOOLS::ogzstream( fileName.c_str(), std::ios::out ) );
+            m_upIO.reset(      new HepMC::IO_GenEvent( *m_upOStream.get() ) );
+        }
     }
     catch (...)
     {
@@ -81,6 +91,8 @@ void HepMCEventFile::Close() throw()
     try
     {
         m_upIO.reset();
+        m_upOStream.reset();
+        m_upIStream.reset();
     }
     catch (...)
     {

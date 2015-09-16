@@ -15,6 +15,8 @@
 		23695DDC1A8CE2460083BFAA /* SherpaRootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */; };
 		23695DDF1A8CE8180083BFAA /* MERootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */; };
 		23695DE01A8CE8180083BFAA /* MERootEvent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */; };
+		237B134C1BA7FC64001AD590 /* Gzip_Stream.C in Sources */ = {isa = PBXBuildFile; fileRef = 237B134A1BA7FC64001AD590 /* Gzip_Stream.C */; };
+		237B134D1BA7FF32001AD590 /* Gzip_Stream.C in Sources */ = {isa = PBXBuildFile; fileRef = 237B134A1BA7FC64001AD590 /* Gzip_Stream.C */; };
 		238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */; };
 		23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23AC9D8E1A8CCD5100BD70A3 /* main.cpp */; };
 		23B379C01B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23B379BE1B0F7AF600C49A17 /* SherpaRootEventFile.cpp */; };
@@ -71,6 +73,8 @@
 		23695DD91A8CDC3F0083BFAA /* SherpaMEProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaMEProgram.h; path = ../Source/SherpaME/SherpaMEProgram.h; sourceTree = SOURCE_ROOT; };
 		23695DDD1A8CE8180083BFAA /* MERootEvent.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MERootEvent.cpp; sourceTree = "<group>"; };
 		23695DDE1A8CE8180083BFAA /* MERootEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MERootEvent.h; sourceTree = "<group>"; };
+		237B134A1BA7FC64001AD590 /* Gzip_Stream.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Gzip_Stream.C; sourceTree = "<group>"; };
+		237B134B1BA7FC64001AD590 /* Gzip_Stream.H */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Gzip_Stream.H; sourceTree = "<group>"; };
 		238522FA1A8A419300CE0D2D /* SherpaWeight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SherpaWeight.cpp; path = ../Source/SherpaWeight/SherpaWeight.cpp; sourceTree = SOURCE_ROOT; };
 		238522FB1A8A419300CE0D2D /* SherpaWeight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SherpaWeight.h; path = ../Source/SherpaWeight/SherpaWeight.h; sourceTree = SOURCE_ROOT; };
 		238522FD1A8A592900CE0D2D /* FeynRules_Model.C */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FeynRules_Model.C; path = "../../../../Sherpa/Source/SHERPA-MC-2.1.1/MODEL/Main/FeynRules_Model.C"; sourceTree = SOURCE_ROOT; };
@@ -221,6 +225,8 @@
 		23AC9D951A8CCDC100BD70A3 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				237B134A1BA7FC64001AD590 /* Gzip_Stream.C */,
+				237B134B1BA7FC64001AD590 /* Gzip_Stream.H */,
 				230EC6E01A77A16800DC49D3 /* common.h */,
 				230EC6E61A77BE6600DC49D3 /* SherpaRootEvent.h */,
 				230EC6E71A77C23400DC49D3 /* SherpaRootEvent.cpp */,
@@ -310,6 +316,7 @@
 				23B379C41B0F7B1B00C49A17 /* HepMCEventFile.cpp in Sources */,
 				238522FC1A8A419300CE0D2D /* SherpaWeight.cpp in Sources */,
 				230EC6E51A77A16800DC49D3 /* SherpaWeightProgram.cpp in Sources */,
+				237B134C1BA7FC64001AD590 /* Gzip_Stream.C in Sources */,
 				230EC6E41A77A16800DC49D3 /* main.cpp in Sources */,
 				23B379C01B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */,
 				230EC6E81A77C23400DC49D3 /* SherpaRootEvent.cpp in Sources */,
@@ -324,6 +331,7 @@
 				23B379C51B0F7B1B00C49A17 /* HepMCEventFile.cpp in Sources */,
 				23695DDB1A8CE0DC0083BFAA /* SherpaMECalculator.cpp in Sources */,
 				23695DDC1A8CE2460083BFAA /* SherpaRootEvent.cpp in Sources */,
+				237B134D1BA7FF32001AD590 /* Gzip_Stream.C in Sources */,
 				23AC9D8F1A8CCD5100BD70A3 /* main.cpp in Sources */,
 				23B379C11B0F7AF600C49A17 /* SherpaRootEventFile.cpp in Sources */,
 				23695DDA1A8CDC3F0083BFAA /* SherpaMEProgram.cpp in Sources */,
@@ -445,6 +453,7 @@
 					"-lHepMC",
 					"-lmpi_cxx",
 					"-lmpi",
+					"-lz",
 				);
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;
@@ -561,6 +570,7 @@
 					"-lHepMC",
 					"-lmpi_cxx",
 					"-lmpi",
+					"-lz",
 				);
 				RUN_CLANG_STATIC_ANALYZER = YES;
 				SDKROOT = macosx;

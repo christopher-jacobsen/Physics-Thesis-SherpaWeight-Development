@@ -43,6 +43,8 @@ public:
 
 private:
     std::string                             m_fileName;
+    std::unique_ptr<std::istream>           m_upIStream;
+    std::unique_ptr<std::ostream>           m_upOStream;
     std::unique_ptr<HepMC::IO_GenEvent>     m_upIO;
     StringVector                            m_coefNames;
 };
