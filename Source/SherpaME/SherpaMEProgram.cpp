@@ -99,6 +99,7 @@ int SherpaMEProgram::Run( const RunParameters & param )
         {
             std::vector<const char *> runArgv(param.argv);
 
+          //runArgv.push_back( "OUTPUT=15" );
             runArgv.push_back( "INIT_ONLY=2"   );   // prevent Sherpa from starting the cross section integration
             runArgv.push_back( "EVENT_OUTPUT=" );   // prevent Sherpa from overwriting any event file specified in the dat file
 
@@ -280,5 +281,6 @@ double SherpaMEProgram::GetEventME( size_t nInParticles, const std::vector<int> 
 
     meCalc.SetMomenta( particleMomenta );
     
-    return meCalc.MatrixElement();
+    double value = meCalc.CSMatrixElement();
+    return value;
 }
