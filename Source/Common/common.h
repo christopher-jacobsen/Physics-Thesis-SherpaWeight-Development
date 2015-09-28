@@ -34,6 +34,26 @@
 #include <system_error>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// string format methods
+
+inline std::string StringFormat( const char * format, std::va_list args ) throw()
+{
+    char buffer[256];
+    vsnprintf( buffer, sizeof(buffer), format, args );
+    return std::string( buffer );
+}
+
+inline std::string StringFormat( const char * format, ... ) throw()
+{
+    std::va_list args;
+    va_start(args, format);
+    std::string result = StringFormat( format, args );
+    va_end(args);
+
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 // message output methods
 
 // TODO: add decl printf
@@ -87,28 +107,36 @@ inline void LogMsgError( const std::string & str ) throw()
 /////////////////////////////////////////////////////////////////////////////
 // exception helpers
 
-[[noreturn]] inline void ThrowError( const char * what )
-{
-    LogMsgError(what);
-    throw std::runtime_error( what );
-}
-
 [[noreturn]] inline void ThrowError( const std::string & what )
 {
     LogMsgError(what.c_str());
     throw std::runtime_error( what );
 }
 
-[[noreturn]] inline void ThrowError( std::errc code, const char * what )
-{
-    LogMsgError(what);
-    throw std::system_error( make_error_code(code), what );
-}
-
 [[noreturn]] inline void ThrowError( std::errc code, const std::string & what )
 {
     LogMsgError(what.c_str());
     throw std::system_error( make_error_code(code), what );
+}
+
+[[noreturn]] inline void ThrowError( const char * format, ... )
+{
+    std::va_list args;
+    va_start(args, format);
+    std::string what = StringFormat( format, args );
+    va_end(args);
+
+    ThrowError( what );
+}
+
+[[noreturn]] inline void ThrowError( std::errc code, const char * format, ... )
+{
+    std::va_list args;
+    va_start(args, format);
+    std::string what = StringFormat( format, args );
+    va_end(args);
+
+    ThrowError( code, what );
 }
 
 [[noreturn]] inline void ThrowError( const std::exception & error )
